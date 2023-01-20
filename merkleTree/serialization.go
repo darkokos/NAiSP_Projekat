@@ -1,6 +1,7 @@
 package merkleTree
 
 
+<<<<<<< HEAD
 var hashSize = 20	//Velicina jednog zapisa, u vidu broja bajtova, u specifikaciji je 20
 //Funkcija radi serijalizaciju stabla iz korena
 func SerializeTree(root MerkleRoot) []byte{
@@ -56,3 +57,32 @@ func DeserializeLevel(level []byte, previousLevel []*Node) []*Node{
 	}
 	return currentLevel
 }
+=======
+var empty []byte
+var emptyVal = byte(42)
+
+func serializeTree(root MerkleRoot) []byte{
+	var serialized []byte
+	for i := 0; i < 20; i++ {
+		empty = append(empty, emptyVal)
+	}
+	serializeNode(*root.root, &serialized)
+	return serialized
+}
+func serializeNode(node Node, serialized *[]byte){
+	*serialized = append(*serialized, node.data...)
+
+	if node.left != nil {
+		serializeNode(*node.left, serialized)
+	}else{
+		*serialized = append(*serialized, empty...)
+	}
+
+	if node.right != nil {
+		serializeNode(*node.right, serialized)
+	}else{
+		*serialized = append(*serialized, empty...)
+	}
+}
+
+>>>>>>> 004f0d9 (Implementacija Merkle Stabla)
