@@ -1,5 +1,6 @@
 package bloomfilter
 
+// Implementacija bloom filtera
 type BloomFilter struct {
 	HashFunctions     []HashWithSeed
 	BitField          []byte
@@ -37,15 +38,9 @@ func CreateBloomFilterBasedOnParams(expectedElements int, falsePositiveRate floa
 func bitAndByteIndex(bitFieldIndex uint64, bitFieldLen uint64) (byteIndex uint64, bitIndex uint64) {
 
 	bitIndex = bitFieldIndex % bitFieldLen
-	//fmt.Println("Bit checking")
-	//fmt.Println(bitIndex)
 
 	byteIndex = bitIndex / 8
 	bitIndex = bitIndex % 8
-
-	//fmt.Println(bitIndex)
-	//fmt.Println(byteIndex)
-	//fmt.Println("------")
 
 	return byteIndex, bitIndex
 }

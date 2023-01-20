@@ -32,7 +32,7 @@ func TestWords(t *testing.T) {
 	for _, word := range word_present {
 		found := bloomFilter.find([]byte(word))
 		if !found {
-			t.Fatalf(word, " je trebao da bude nadjen, a nije")
+			t.Fatalf("%s je trebao da bude nadjen, a nije", word)
 		} else {
 			t.Log(word, " nadjen")
 		}
@@ -47,4 +47,18 @@ func TestWords(t *testing.T) {
 		}
 	}
 
+}
+
+func TestSerializationLength(t *testing.T) {
+	expectedElements := 99
+	falsePositiveRate := 0.01
+
+	bloomFilter := CreateBloomFilterBasedOnParams(expectedElements, falsePositiveRate)
+
+	expectedLength := bloomFilter.BitArrayLen/8 + bloomFilter.BitArrayLen%8 + bloomFilter.HashFunctionCount*4 + 4 + 4
+	actualLength := len(bloomFilter.Serialize())
+
+	if len(bloomFilter.Serialize()) != int(expectedLength) {
+		t.Fatalf("Duzina serijalizovanog bloom filtera nije ispravna. Ocekivano: %d Dobijena duzina: %d", expectedLength, actualLength)
+	}
 }
