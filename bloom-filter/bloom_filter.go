@@ -1,6 +1,7 @@
 package bloomfilter
 
 // Implementacija bloom filtera
+// Duzina seed-a jedne hes funkcije je 32 bajta
 type BloomFilter struct {
 	HashFunctions     []HashWithSeed
 	BitField          []byte

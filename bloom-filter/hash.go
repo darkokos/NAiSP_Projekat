@@ -18,7 +18,7 @@ func (h HashWithSeed) Hash(data []byte) uint64 {
 	return binary.BigEndian.Uint64(fn.Sum(nil))
 }
 
-// Funkcija kreira k razlicitih hes funkcija sa razlicitim seed-ovima
+// Funkcija kreira k razlicitih hes funkcija sa razlicitim 32-bajtnim seed-ovima
 func CreateHashFunctions(k uint) []HashWithSeed {
 	h := make([]HashWithSeed, k)
 	ts := uint(time.Now().Unix())
