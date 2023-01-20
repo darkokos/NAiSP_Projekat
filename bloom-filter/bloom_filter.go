@@ -1,9 +1,9 @@
 package bloomfilter
 
 type BloomFilter struct {
-	HashFunctions []HashWithSeed
-	BitField []byte
-	BitArrayLen uint
+	HashFunctions     []HashWithSeed
+	BitField          []byte
+	BitArrayLen       uint
 	HashFunctionCount uint
 }
 
@@ -15,7 +15,9 @@ func CreateBloomFilter(bitArrayLen uint, hashFunctionCount uint) BloomFilter {
 		Funkcija pravi bloom filter sa poljem bitova duzine bitArrayLen i
 		hashFunnctionCount hes funkcija.
 	*/
-	BitField := make([]byte, bitArrayLen/8)
+
+	BitField := make([]byte, bitArrayLen/8+bitArrayLen%8) // Ako broj bitova nije deljiv sa 8, zaokruzujemo broj bajtova na gore da bi se alociralo dovoljno prostora.
+
 	hashFunctions := CreateHashFunctions(hashFunctionCount)
 
 	bloomFilter := BloomFilter{HashFunctions: hashFunctions, BitField: BitField, BitArrayLen: bitArrayLen, HashFunctionCount: hashFunctionCount}
@@ -26,7 +28,7 @@ func CreateBloomFilter(bitArrayLen uint, hashFunctionCount uint) BloomFilter {
 
 func bitAndByteIndex(bitFieldIndex uint64, bitFieldLen uint64) (byteIndex uint64, bitIndex uint64) {
 	/*
-		Funkcija dekomponuje indeks bita u polju bitova na indeks bajta i 
+		Funkcija dekomponuje indeks bita u polju bitova na indeks bajta i
 		indeks bita u tom bajtu.
 	*/
 
@@ -35,7 +37,7 @@ func bitAndByteIndex(bitFieldIndex uint64, bitFieldLen uint64) (byteIndex uint64
 	//fmt.Println(bitIndex)
 
 	byteIndex = bitIndex / 8
-	bitIndex = bitIndex % 8 - 1
+	bitIndex = bitIndex % 8
 
 	//fmt.Println(bitIndex)
 	//fmt.Println(byteIndex)
@@ -53,7 +55,7 @@ func (bloomFilter BloomFilter) add(key []byte) {
 	for _, hashFn := range bloomFilter.HashFunctions {
 		byteIndex, bitIndex := bitAndByteIndex(hashFn.Hash(key), uint64(bloomFilter.BitArrayLen))
 
-		bloomFilter.BitField[byteIndex] |= masks[bitIndex]  
+		bloomFilter.BitField[byteIndex] |= masks[bitIndex]
 
 	}
 }
@@ -67,9 +69,9 @@ func (bloomFilter BloomFilter) find(key []byte) bool {
 	for _, hashFn := range bloomFilter.HashFunctions {
 		byteIndex, bitIndex := bitAndByteIndex(hashFn.Hash(key), uint64(bloomFilter.BitArrayLen))
 
-		couldItExist := bloomFilter.BitField[byteIndex] & masks[bitIndex]  
-		
-		if (couldItExist == 0) {
+		couldItExist := bloomFilter.BitField[byteIndex] & masks[bitIndex]
+
+		if couldItExist == 0 {
 			return false
 		}
 	}
