@@ -7,7 +7,7 @@ import (
 
 func Test(t *testing.T) {
 	root := CreateMerkleTree([][]byte{[]byte("BLA"), []byte("BLA"), []byte("BLA"), []byte("BLA"), []byte("BLA")})
-	serialized := SerializeTree(root)
+	serialized := serializeTree(root)
 	fmt.Print(serialized)
 	fmt.Print(len(serialized))
 }
