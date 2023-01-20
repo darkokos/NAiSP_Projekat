@@ -19,14 +19,11 @@ func TestWords(t *testing.T) {
 		"geeksforgeeks", "twitter"}
 
 	falsePositiveRate := 0.05
-	bitArrayLen := CalculateM(len(word_present), falsePositiveRate)
-	hashFnCount := CalculateK(len(word_present), bitArrayLen)
 
-	t.Log("Duzina niza bitova: ", bitArrayLen)
-	t.Log("Broj hes funkcija: ", hashFnCount)
+	bloomFilter := CreateBloomFilterBasedOnParams(len(word_present), falsePositiveRate)
+	t.Log("Duzina niza bitova: ", bloomFilter.BitArrayLen)
+	t.Log("Broj hes funkcija: ", bloomFilter.HashFunctionCount)
 	t.Log("False-positive rate: ", falsePositiveRate)
-
-	bloomFilter := CreateBloomFilter(bitArrayLen, hashFnCount)
 
 	for _, word := range word_present {
 		bloomFilter.add([]byte(word))
