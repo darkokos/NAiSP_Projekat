@@ -24,7 +24,16 @@ func CreateBloomFilter(bitArrayLen uint, hashFunctionCount uint) BloomFilter {
 	return bloomFilter
 }
 
-//TODO: Kreiranje bloom filtera na osnovu broja elemenata i false-positive rate-a
+// Funkcija kreira bloom filter koji ima postavljene optimalne parametre za
+// dati ocekivan broj elemenata i false-positive verovatnocu.
+// Videti [CalculateM] i [CalculateK].
+func CreateBloomFilterBasedOnParams(expectedElements int, falsePositiveRate float64) BloomFilter {
+
+	bitArrayLen := CalculateM(expectedElements, falsePositiveRate)
+	hashFnCount := CalculateK(expectedElements, bitArrayLen)
+
+	return CreateBloomFilter(bitArrayLen, hashFnCount)
+}
 
 func bitAndByteIndex(bitFieldIndex uint64, bitFieldLen uint64) (byteIndex uint64, bitIndex uint64) {
 	/*
