@@ -1,4 +1,4 @@
-module github.com/darkokos/NAiSP_Projekat
+module CMS
 
 go 1.19
 
