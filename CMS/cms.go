@@ -24,15 +24,15 @@ func (cms *CMS) Init(precision float64, certainty float64){
 func (cms *CMS) Add(key []byte){
 	var j uint64
 	for i := range (*cms).hashes {
-		j = (*cms).hashes[i].Hash(key)
+		j = (*cms).hashes[i].Hash(key) % (uint64)((*cms).m)
 		(*cms).table[i][j] += 1
 	}
 }
 func (cms *CMS) Read(key []byte) uint{
-	min := uint(0)
+	min := ^uint(0)
 	var j uint64
 	for i := range (*cms).hashes {
-		j = (*cms).hashes[i].Hash(key)
+		j = (*cms).hashes[i].Hash(key) % (uint64)((*cms).m)
 		if ((*cms).table[i][j] < min){
 			min = (*cms).table[i][j]
 		}
