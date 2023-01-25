@@ -140,9 +140,7 @@ func TestSerializeDeserializeWithOperations(t *testing.T) {
 		bloomFilter.add([]byte(word))
 	}
 
-	t.Log((bloomFilter.HashFunctions))
 	bloomFilter = Deserialize(bloomFilter.Serialize())
-	t.Log(bloomFilter.HashFunctions)
 
 	for _, word := range word_present {
 		found := bloomFilter.find([]byte(word))
