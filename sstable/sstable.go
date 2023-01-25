@@ -31,7 +31,7 @@ func writeSSTable(filename string, sortedEntries []memtable.MemTableEntry) {
 		if err != nil {
 			// handle error
 		}
-		writeIndexEntry(indexFile, key, uint64(offset))
+		writeIndexEntry(indexFile, string(key), uint64(offset))
 		fmt.Println("Kljuc: ", key, "Vrednost: ", value)
 
 		err = binary.Write(f, binary.LittleEndian, uint64(len(key)))
