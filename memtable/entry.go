@@ -11,6 +11,6 @@ type MemTableEntry struct {
 	Tombstone bool   // Da li je element obrisan
 }
 
-func createEntry(key []byte, value []byte) *MemTableEntry {
+func CreateEntry(key []byte, value []byte) *MemTableEntry {
 	return &MemTableEntry{Key: key, Value: value, Timestamp: time.Now().UnixNano(), Tombstone: false}
 }
