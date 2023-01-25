@@ -48,3 +48,7 @@ func (hashmap *HashMapInternal) Delete(key string) bool {
 		return true
 	}
 }
+
+func (hashmap *HashMapInternal) Clear() {
+	hashmap.data = make(map[string]*MemTableEntry, len(hashmap.data))
+}
