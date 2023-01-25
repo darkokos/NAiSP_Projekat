@@ -60,12 +60,14 @@ func (list *Dll) Push(data []byte) {
 	el := DllElement{data: data}
 	if list.size == 1 {
 		list.head = &el
+		list.tail = &el
 		return
 	}
 	(*list.head).prev = &el
 	el.next = list.head
 	(*list).head = &el
 }
+
 func (list *Dll) PushNode(el DllElement) {
 	if (*list).IsFull() {
 		(*list).DeleteLast()
