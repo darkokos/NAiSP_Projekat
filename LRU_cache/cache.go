@@ -30,8 +30,11 @@ func (cache *Cache) Add(key []byte, val []byte) {
 		(*cache).hMap[k] += 1
 	}
 	if (*cache).list.IsFull() {
+		delete((*cache).hMap, string((*cache).list.GetLast()))
 		(*cache).list.DeleteLast()
+		(*cache).size--
 	}
+	(*cache).size++
 	(*cache).hMap[string(key)] = 0
 	(*cache).list.Push(val)
 }
