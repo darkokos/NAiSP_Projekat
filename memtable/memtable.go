@@ -16,7 +16,6 @@ func makeHashMapMemTable(capacity int) *MemTable {
 }
 
 func (memTable *MemTable) remakeStructure() {
-	fmt.Println("Made struct")
 	memTable.data.Clear()
 }
 
@@ -72,6 +71,8 @@ func (memTable *MemTable) Flush() {
 		fmt.Println("Kljuc: ", string(entry.key), "Vrednost: ", entry.value, "Timestamp:", entry.timestamp, "Obrisan: ", entry.tombstone)
 	}
 
+	//TODO: Formiranje SSTable-a
+	// Za sada se ispisuje sadrzaj na ekran
 	// writeSSTable(fmt.Sprintf("usertable-%d-TABLE.db", memTable.generation), memTableEntries)
 
 	memTable.generation = memTable.generation + 1
