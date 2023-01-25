@@ -1,15 +1,16 @@
 package memtable
 
-type Entry struct {
+import (
+	"time"
+)
+
+type MemTableEntry struct {
+	key       []byte
 	value     []byte
+	timestamp int64
 	tombstone bool
 }
 
-type MemTableEntry struct {
-	key   string
-	value []byte
-}
-
-func createEntry(value []byte) *Entry {
-	return &Entry{value: value, tombstone: false}
+func createEntry(key []byte, value []byte) *MemTableEntry {
+	return &MemTableEntry{key: key, value: value, timestamp: time.Now().UnixMicro(), tombstone: false}
 }
