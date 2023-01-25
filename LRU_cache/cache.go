@@ -29,6 +29,9 @@ func (cache *Cache) Add(key []byte, val []byte) {
 	for k, _ := range (*cache).hMap {
 		(*cache).hMap[k] += 1
 	}
+	if (*cache).list.IsFull() {
+		(*cache).list.DeleteLast()
+	}
 	(*cache).hMap[string(key)] = 0
 	(*cache).list.Push(val)
 }
