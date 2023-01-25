@@ -90,3 +90,6 @@ func (list *Dll) DeleteLast() {
 	last.next = nil
 	(*list).size--
 }
+func (list *Dll) GetLast() []byte {
+	return (*list.tail).data
+}
