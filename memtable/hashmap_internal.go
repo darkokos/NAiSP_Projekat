@@ -24,7 +24,7 @@ func (hashmap *HashMapInternal) Get(key string) (*MemTableEntry, bool) {
 func (hashmap *HashMapInternal) Update(key string, value []byte) {
 	v, ok := hashmap.data[key]
 	if ok {
-		v.value = value
+		v.Value = value
 	} else {
 		hashmap.data[key] = createEntry([]byte(key), value)
 	}
@@ -60,7 +60,7 @@ func (hashmap *HashMapInternal) Delete(key string) bool {
 	if !ok {
 		return false
 	} else {
-		hashmap.data[key].tombstone = true
+		hashmap.data[key].Tombstone = true
 		return true
 	}
 }
