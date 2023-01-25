@@ -10,5 +10,9 @@ func Test(t *testing.T){
 	fmt.Print(list.size)
 	list.Push([]byte("DA"))
 	
-	
+	cache := Cache{}
+	cache.Init(10)
+	cache.Add([]byte("BLA"), []byte("BLA"))
+	cache.Add([]byte("TA"), []byte("TA"))
+	fmt.Print(cache.Access([]byte("TA")))
 }
