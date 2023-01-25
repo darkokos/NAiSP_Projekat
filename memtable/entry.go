@@ -5,12 +5,12 @@ import (
 )
 
 type MemTableEntry struct {
-	key       []byte
-	value     []byte
-	timestamp int64
-	tombstone bool
+	key       []byte // Kljuc elementa
+	value     []byte // Vrednost elementa
+	timestamp int64  // Vreme kada je element dodat/promenjen u nanosekundama
+	tombstone bool   // Da li je element obrisan
 }
 
 func createEntry(key []byte, value []byte) *MemTableEntry {
-	return &MemTableEntry{key: key, value: value, timestamp: time.Now().UnixMicro(), tombstone: false}
+	return &MemTableEntry{key: key, value: value, timestamp: time.Now().UnixNano(), tombstone: false}
 }
