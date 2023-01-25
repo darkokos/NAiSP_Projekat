@@ -50,6 +50,20 @@ func (memTable *MemTable) Delete(key string) bool {
 	return memTable.data.Delete(key)
 }
 
+// Funkcija proverava da li je element sa datim kljucem bio obrisan tj. da li
+// postoji MemTableEntry sa tim kljucem i postavljenim tombstone-om na true
+func (memTable *MemTable) IsDeleted(key string) bool {
+
+	//FIXME: Moguce je da ne citamo dva puta iz strukture za svako citanje
+	v, ok := memTable.data.Get(key)
+
+	if !ok {
+		return false
+	} else {
+		return v.tombstone
+	}
+}
+
 func (memTable *MemTable) Flush() {
 
 	memTableEntries := memTable.data.GetSortedEntries()
