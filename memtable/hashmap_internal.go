@@ -7,6 +7,10 @@ type HashMapInternal struct {
 	data map[string]*MemTableEntry
 }
 
+func makeHashMapInternal(capacity int) *HashMapInternal {
+	return &HashMapInternal{data: make(map[string]*MemTableEntry, capacity)}
+}
+
 // Dobavlja MemTableEntry koji odgovara datom klucu i vraca true
 // ili vraca nil i false ako element sa tim kljucem ne postoji
 func (hashmap *HashMapInternal) Get(key string) (*MemTableEntry, bool) {
@@ -14,8 +18,20 @@ func (hashmap *HashMapInternal) Get(key string) (*MemTableEntry, bool) {
 	return v, ok
 }
 
+// Dodaje ili menja element u strukturi
+// Ako element postoji postavlja value polje odgovarajuceg MemTableEntry-a na value
+// Ako element ne postoji, konstruise novi MemTableEntry i dodaje ga u strukturu
+func (hashmap *HashMapInternal) Update(key string, value []byte) {
+	v, ok := hashmap.data[key]
+	if ok {
+		v.value = value
+	} else {
+		hashmap.data[key] = createEntry([]byte(key), value)
+	}
+}
+
 // Dobavlja sve elemente iz strukture i vraca ih sortirane po kljucu u rastucem poretku
-func (hashmap *HashMapInternal) GetAllEntries() []*MemTableEntry {
+func (hashmap *HashMapInternal) GetSortedEntries() []*MemTableEntry {
 	keys := make([]string, 0, len(hashmap.data))
 
 	// Dobavljanje svih kljuceva iz mape
@@ -51,4 +67,8 @@ func (hashmap *HashMapInternal) Delete(key string) bool {
 
 func (hashmap *HashMapInternal) Clear() {
 	hashmap.data = make(map[string]*MemTableEntry, len(hashmap.data))
+}
+
+func (hashmap *HashMapInternal) Size() int {
+	return len(hashmap.data)
 }

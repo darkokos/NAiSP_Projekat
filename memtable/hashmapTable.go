@@ -2,29 +2,28 @@ package memtable
 
 import (
 	"fmt"
-	"sort"
 )
 
 type HashMapMemTable struct {
-	data       map[string]*Entry
+	data       *HashMapInternal
 	capacity   int
 	generation int
 }
 
 func makeHashMapMemTable(capacity int) *HashMapMemTable {
-	memTable := HashMapMemTable{data: nil, capacity: capacity, generation: 0}
-	memTable.remakeStructure()
+	memTable := HashMapMemTable{data: makeHashMapInternal(capacity), capacity: capacity, generation: 0}
 	return &memTable
 }
 
 func (memTable *HashMapMemTable) remakeStructure() {
 	fmt.Println("Made struct")
-	memTable.data = make(map[string]*Entry)
+	memTable.data.Clear()
 }
 
 func (memTable *HashMapMemTable) Get(key string) ([]byte, bool) {
 	//Vrati vrednost i uspesnost pretrage
-	v, ok := memTable.data[key]
+	v, ok := memTable.data.Get(key)
+
 	return v.value, ok
 
 }
@@ -32,14 +31,9 @@ func (memTable *HashMapMemTable) Get(key string) ([]byte, bool) {
 func (memTable *HashMapMemTable) Update(key string, value []byte) bool {
 	//Promeni vrednost
 	//Vrati uspesnost
-	memTable.data[key] = createEntry(value)
+	memTable.data.Update(key, value)
 
-	/*fmt.Println("UPDATE")
-	fmt.Println(memTable.capacity)
-	fmt.Println(len(memTable.data))
-	fmt.Println("END")*/
-
-	if len(memTable.data) >= memTable.capacity {
+	if memTable.data.Size() == memTable.capacity {
 		memTable.Flush()
 	}
 
@@ -49,34 +43,15 @@ func (memTable *HashMapMemTable) Update(key string, value []byte) bool {
 func (memTable *HashMapMemTable) Delete(key string) bool {
 	//Logicko brisanje
 	//Vrati uspesnost
-	v, ok := memTable.data[key]
-
-	if !ok {
-		return false
-	} else {
-		v.tombstone = true
-		return true
-	}
-
-	return true
+	return memTable.data.Delete(key)
 }
 
 func (memTable *HashMapMemTable) Flush() {
 
-	keys := make([]string, 0, len(memTable.data))
-	fmt.Println(memTable.data)
-	for key := range memTable.data {
-		if !memTable.data[key].tombstone {
-			keys = append(keys, string(key))
-		}
-	}
+	memTableEntries := memTable.data.GetSortedEntries()
 
-	sort.Strings(keys)
-
-	memTableEntries := make([]MemTableEntry, len(keys))
-	for idx, key := range keys {
-		memTableEntries[idx] = MemTableEntry{key: key, value: memTable.data[key].value}
-		fmt.Println("Kljuc: ", key, " Vrednost: ", memTableEntries[idx].value)
+	for _, entry := range memTableEntries {
+		fmt.Println("Kljuc: ", string(entry.key), "Vrednost: ", entry.value, "Timestamp:", entry.timestamp, "Obrisan: ", entry.tombstone)
 	}
 
 	// writeSSTable(fmt.Sprintf("usertable-%d-TABLE.db", memTable.generation), memTableEntries)
