@@ -24,7 +24,11 @@ func (memTable *MemTable) Get(key string) ([]byte, bool) {
 	//Vrati vrednost i uspesnost pretrage
 	v, ok := memTable.data.Get(key)
 
-	return v.value, ok
+	if ok {
+		return v.value, ok
+	} else {
+		return nil, ok
+	}
 
 }
 
