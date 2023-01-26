@@ -71,6 +71,24 @@ func (n *BTreeNode) DeleteKey(key []byte){
 func (t *BTree) Delete(key []byte) {
 	(*(*t).root).DeleteKey(key)
 }
+func (t *BTree) ModifyKey(key []byte, value []byte) int {
+	if((*t).root == nil){
+		return -1
+	}
+
+	ok, node := (*t).Search(key)
+
+	if (ok == 0){
+		for i, k := range (*node).keys{
+			fmt.Print(k.key)
+			if(string(k.key) == string(key) && k.tombstone == false){
+				(*node).keys[i].val = value
+			}
+		}
+		return 0	
+	}
+	return -1
+}
 func (t *BTree) AddKey(key []byte, value []byte) int{
 	pair := KvPair {key : key, val : value, tombstone : false}
 	if((*t).root == nil){
