@@ -26,7 +26,10 @@ func Test(t *testing.T){
 
 	fmt.Print(tr.GetValue([]byte{2, 3}))
 
+	tr.ModifyKey([]byte{2, 3}, []byte {11})
+	tr.ModifyKey([]byte{9, 9}, []byte {11})
 
+	fmt.Print(tr.GetValue([]byte{2, 3}))
 	//tr.AddKey([]byte{1, 2})
 	fmt.Print("TESTING")
 }
