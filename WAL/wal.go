@@ -3,9 +3,8 @@
 //Dodati citanje svih logova, a ne samo poslednjeg, ako je to potrebno
 //Odrediti kako ce se WAL koristiti, da bi znali sta da se radi sa procitanim podacima
 //Ispravke
-//Postaviti da citanje sadrzaja datoteke radi preko os paketa, jer navodno ioutil vise nije podrzan
 
-package main
+package wal
 
 import (
 	"encoding/binary"
@@ -297,14 +296,4 @@ func DeleteSegments() {
 			}
 		}
 	}
-}
-
-func main() {
-	walEntry := CreateWALEntry(true, []byte{0, 5, 10}, []byte{5, 10, 0, 49, 7})
-
-	walEntry.append()
-
-	ReadWAL()
-
-	DeleteSegments()
 }
