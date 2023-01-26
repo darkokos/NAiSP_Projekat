@@ -69,7 +69,28 @@ func (t *BTree) AddKey(key []byte) int{
 				return 0
 			}
 		}
-
+		//Ne moze rotacija, ide deljenje cvora
+		fmt.Print("DELJENJE")
+		newParent := BTreeNode{
+			parent : (*node).parent,
+			d : (*node).d}
+		if((*t).root == node){
+			(*t).root = &newParent
+		}
+		leftChild := BTreeNode{
+			parent : &newParent,
+			d : (*node).d}	
+		rightChild := BTreeNode{
+			parent : &newParent,
+			d : (*node).d}	
+		newParent.keys = [][]byte{(*node).keys[int(len((*node).keys)/2)]}
+		leftChild.keys = (*node).keys[:int(len((*node).keys)/2)]
+		rightChild.keys = (*node).keys[int(len((*node).keys)/2)+1:]
+		if(string(key) < string(leftChild.keys[len(leftChild.keys)-1])){
+			leftChild.InsertKey(key)
+			return 0
+		}
+		rightChild.InsertKey(key)
 	}
 	return 0
 }
