@@ -2,6 +2,7 @@ package sstable
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/darkokos/NAiSP_Projekat/memtable"
@@ -19,4 +20,23 @@ func TestSSTable(t *testing.T) {
 	sorted_entries = append(sorted_entries, memtable.CreateEntry([]byte("Vuk"), []byte{52, 21}))
 
 	writeSSTable("test_table.db", sorted_entries)
+}
+
+func TestReadSSTable(t *testing.T) {
+
+	f, err := os.Open("test_table.db")
+
+	if err != nil {
+		t.Fatalf("Problem u otvaranju fajla")
+	}
+
+	entry, has_next := ReadOneSSTEntry(f)
+
+	for has_next {
+		fmt.Println("Kljuc: ", entry.Key, " Vrednost: ", entry.Value)
+		entry, has_next = ReadOneSSTEntry(f)
+
+	}
+
+	f.Close()
 }

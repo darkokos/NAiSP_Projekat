@@ -63,7 +63,7 @@ func writeSSTableEntry(sstableFile *os.File, entry *memtable.MemTableEntry) {
 
 	timestamp := time.Now().UnixNano()
 	timestamp_bytes := make([]byte, wal.TIMESTAMP_SIZE)
-	binary.BigEndian.PutUint64(timestamp_bytes, uint64(timestamp))
+	binary.LittleEndian.PutUint64(timestamp_bytes, uint64(timestamp))
 	crc.Write(timestamp_bytes)
 
 	tombstone_byte := make([]byte, wal.TOMBSTONE_SIZE)
@@ -74,12 +74,12 @@ func writeSSTableEntry(sstableFile *os.File, entry *memtable.MemTableEntry) {
 
 	keySize := uint64(len(entry.Key))
 	key_size_bytes := make([]byte, wal.KEY_SIZE_SIZE)
-	binary.BigEndian.PutUint64(key_size_bytes, keySize)
+	binary.LittleEndian.PutUint64(key_size_bytes, keySize)
 	crc.Write(key_size_bytes)
 
 	valueSize := uint64(len(entry.Value))
 	value_size_bytes := make([]byte, wal.VALUE_SIZE_SIZE)
-	binary.BigEndian.PutUint64(value_size_bytes, valueSize)
+	binary.LittleEndian.PutUint64(value_size_bytes, valueSize)
 	crc.Write(value_size_bytes)
 
 	crc.Write(entry.Key)
