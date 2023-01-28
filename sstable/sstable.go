@@ -91,6 +91,7 @@ func writeSSTable(filename string, sortedEntries []*memtable.MemTableEntry) {
 	}
 
 	writeFilter(filterFile, sortedEntries)
+	writeMetadataSeparateFile(sortedEntries, "metadata.db")
 
 	f.Close()
 	indexFile.Close()
