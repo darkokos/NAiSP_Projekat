@@ -11,9 +11,12 @@ import (
 
 // Funkcija pokusava da procita sledeci zapis u SSTabeli na koju pokazuje fajl
 // deskriptor sstableFile.
-// Funkcija vraca sledeci zapis i true ako mozda postoji sledeci zapis ili nil i false
-// ako se doslo do kraja fajla ili greske
-func ReadOneSSTEntry(sstableFile *os.File) (*SSTableEntry, bool) {
+// Funkcija vraca par koji se sastoji od zapisa u SSTabeli i bool-a koji govori
+// da li je citanje bilo uspesno.
+// Funkcija vraca sledeci zapis i true ako uspesno procita zapis.
+// Funkcija vraca nil i true ako nema vise zapisa koji treba da se procitaju.
+// Funckcija vraca nil i false ako je doslo do greske u citanju fajla.
+func ReadOneSSTEntry(sstableFile *os.File) (entry *SSTableEntry, ok bool) {
 	// Mozda da se vracaju dva bool-a, hasNext i err
 	//s := SSTableEntry
 
@@ -27,29 +30,29 @@ func ReadOneSSTEntry(sstableFile *os.File) (*SSTableEntry, bool) {
 	err := binary.Read(sstableFile, binary.LittleEndian, crc_bytes)
 	if err != nil {
 		if err == io.EOF {
-			return nil, false
+			return nil, true
 		}
-		panic(err) // TODO: Rukovanje greskom ako nesto ne mozemo procitati
+		return nil, false
 	}
 
 	err = binary.Read(sstableFile, binary.LittleEndian, timestamp_bytes)
 	if err != nil {
-		panic(err) // TODO: Rukovanje greskom ako nesto ne mozemo procitati
+		return nil, false
 	}
 
 	err = binary.Read(sstableFile, binary.LittleEndian, tombstone_byte)
 	if err != nil {
-		panic(err) // TODO: Rukovanje greskom ako nesto ne mozemo procitati
+		return nil, false
 	}
 
 	err = binary.Read(sstableFile, binary.LittleEndian, key_size_bytes)
 	if err != nil {
-		panic(err) // TODO: Rukovanje greskom ako nesto ne mozemo procitati
+		return nil, false
 	}
 
 	err = binary.Read(sstableFile, binary.LittleEndian, value_size_bytes)
 	if err != nil {
-		panic(err) // TODO: Rukovanje greskom ako nesto ne mozemo procitati
+		return nil, false
 	}
 
 	crc := binary.LittleEndian.Uint32(crc_bytes)
@@ -69,12 +72,12 @@ func ReadOneSSTEntry(sstableFile *os.File) (*SSTableEntry, bool) {
 
 	err = binary.Read(sstableFile, binary.LittleEndian, key_bytes)
 	if err != nil {
-		panic(err) // TODO: Rukovanje greskom ako nesto ne mozemo procitati
+		return nil, false
 	}
 
 	err = binary.Read(sstableFile, binary.LittleEndian, value_bytes)
 	if err != nil {
-		panic(err) // TODO: Rukovanje greskom ako nesto ne mozemo procitati
+		return nil, false
 	}
 
 	return &SSTableEntry{
