@@ -1,5 +1,8 @@
 package sstable
 
+//TODO: Citanje iz spojenog fajla
+//TODO: Trazenje po indeksu
+
 import (
 	"encoding/binary"
 	"io"
