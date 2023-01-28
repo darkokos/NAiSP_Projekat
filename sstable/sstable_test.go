@@ -30,13 +30,27 @@ func TestReadSSTable(t *testing.T) {
 		t.Fatalf("Problem u otvaranju fajla")
 	}
 
-	entry, has_next := ReadOneSSTEntry(f)
+	entry, ok := ReadOneSSTEntry(f)
 
-	for has_next {
+	for entry != nil {
 		fmt.Println("Kljuc: ", entry.Key, " Vrednost: ", entry.Value)
-		entry, has_next = ReadOneSSTEntry(f)
+		entry, ok = ReadOneSSTEntry(f)
+
+		if !ok {
+			t.Fatalf("Doslo je do greske u citanju fajla")
+		}
 
 	}
 
 	f.Close()
+}
+
+func TestSSTableReadNonExistentFile(t *testing.T) {
+	f, _ := os.Open("nepostojeci_fajl")
+
+	entry, ok := ReadOneSSTEntry(f)
+
+	if (entry != nil) || ok {
+		t.Fatalf("Citanje iz postojeceg fajla nije trebalo da uspe")
+	}
 }
