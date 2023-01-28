@@ -5,6 +5,7 @@ package sstable
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"os"
 
@@ -98,4 +99,90 @@ func ReadOneSSTEntry(sstableFile *os.File) (entry *SSTableEntry, ok bool) {
 		os.Stderr.WriteString("CRC provera nije uspela")
 		return nil, false
 	}
+}
+
+//TODO: Wrapper oko ovoga za imena fajlova
+
+func readOneSSTEntryWithKey(key []byte, filterFile *os.File, summaryFile *os.File, indexFile *os.File, sstFile *os.File) (entry *SSTableEntry) {
+	key_string := string(key)
+	filter := readFilter(filterFile)
+
+	if !filter.Find(key) {
+		return nil
+	}
+
+	summaryEntry := findSummaryEntry(summaryFile, key)
+	if summaryEntry == nil {
+		return nil
+	}
+
+	//stat, _ := os.Stat(indexFile.Name())
+	//fmt.Println("Velicina indeksa: ", stat.Size())
+	_, err := indexFile.Seek(summaryEntry.Offset, io.SeekCurrent)
+	if err != nil {
+		fmt.Println("Greska pri citanju indeksa: ", err)
+		return nil
+	}
+
+	currentIndexEntry, _ := readIndexEntry(indexFile)
+
+	for currentIndexEntry != nil && currentIndexEntry.Key <= summaryEntry.LastKey {
+		if currentIndexEntry.Key == key_string {
+			_, err := sstFile.Seek(currentIndexEntry.Offset, io.SeekCurrent)
+			if err != nil {
+				fmt.Println("Greska: ", err)
+				fmt.Println(int(currentIndexEntry.Offset))
+				return nil
+			}
+
+			sstEntry, _ := ReadOneSSTEntry(sstFile)
+			return sstEntry
+		}
+		currentIndexEntry, _ = readIndexEntry(indexFile)
+	}
+
+	return nil
+
+	//Proveri opseg summary-a
+	//Citaj summary dok ne naidjes
+	//Procitaj indeks
+	//Procitaj entry
+}
+
+func ReadOneSSTEntryWithKey(key []byte, sstFileName string, indexFilename string, summaryFilename string, filterFilename string) *SSTableEntry {
+
+	sstFile, err := os.Open(sstFileName)
+
+	if err != nil {
+		return nil
+	}
+	defer sstFile.Close()
+
+	// Slucaj citanja iz vise fajlova
+	if indexFilename != "" {
+		filterFile, err := os.Open(filterFilename)
+
+		if err != nil {
+			return nil
+		}
+		defer filterFile.Close()
+
+		summaryFile, err := os.Open(summaryFilename)
+
+		if err != nil {
+			return nil
+		}
+		defer summaryFile.Close()
+
+		indexFile, err := os.Open(indexFilename)
+		if err != nil {
+			return nil
+		}
+
+		return readOneSSTEntryWithKey(key, filterFile, summaryFile, indexFile, sstFile)
+	} else {
+		//TODO: Citanje iz sstable-a koji je jedan fajl
+	}
+
+	return nil
 }

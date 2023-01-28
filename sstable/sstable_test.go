@@ -22,7 +22,7 @@ func TestSSTable(t *testing.T) {
 	writeSSTable("test_table.db", sorted_entries)
 }
 
-func TestReadSSTable(t *testing.T) {
+func TestReadWholeSSTable(t *testing.T) {
 
 	f, err := os.Open("test_table.db")
 
@@ -43,6 +43,46 @@ func TestReadSSTable(t *testing.T) {
 	}
 
 	f.Close()
+}
+
+func TestReadSSTableByKeyMultipleFiles(t *testing.T) {
+
+	entry := ReadOneSSTEntryWithKey([]byte("Gojko"), "test_table.db", "index.db", "summary.db", "filter.db")
+
+	if entry == nil {
+		t.Fatalf("Trebalo je da nadje entry")
+	} else {
+		if string(entry.Key) != "Gojko" {
+			t.Fatalf("Kljuc se ne poklapa")
+		}
+	}
+
+	entry = ReadOneSSTEntryWithKey([]byte("Vuk"), "test_table.db", "index.db", "summary.db", "filter.db")
+
+	if entry == nil {
+		t.Fatalf("Trebalo je da nadje entry")
+	} else {
+		if string(entry.Key) != "Vuk" {
+			t.Fatalf("Kljuc se ne poklapa")
+		}
+	}
+
+	entry = ReadOneSSTEntryWithKey([]byte("Darko"), "test_table.db", "index.db", "summary.db", "filter.db")
+
+	if entry == nil {
+		t.Fatalf("Trebalo je da nadje entry")
+	} else {
+		if string(entry.Key) != "Darko" {
+			t.Fatalf("Kljuc se ne poklapa")
+		}
+	}
+
+	entry = ReadOneSSTEntryWithKey([]byte("Momia"), "test_table.db", "index.db", "summary.db", "filter.db")
+
+	if entry != nil {
+		t.Fatalf("Nije trebalo da nadje ovo")
+	}
+
 }
 
 func TestSSTableReadNonExistentFile(t *testing.T) {
