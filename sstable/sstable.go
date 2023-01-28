@@ -45,6 +45,12 @@ func writeSSTable(filename string, sortedEntries []*memtable.MemTableEntry) {
 		panic(err)
 	}
 
+	//TODO: Ime summary fajla
+	filterFile, err := os.OpenFile("filter.db", os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		panic(err)
+	}
+
 	writeSummaryHeader(summaryFile, sortedEntries[0], sortedEntries[len(sortedEntries)-1])
 
 	current_begin := sortedEntries[0]
@@ -84,7 +90,12 @@ func writeSSTable(filename string, sortedEntries []*memtable.MemTableEntry) {
 		writeSummaryEntry(summaryFile, current_begin, sortedEntries[len(sortedEntries)-1], current_index_offset)
 	}
 
+	writeFilter(filterFile, sortedEntries)
+
 	f.Close()
+	indexFile.Close()
+	summaryFile.Close()
+	filterFile.Close()
 }
 
 // Funkcija pise red SSTable-a koji cuva prosledjeni
