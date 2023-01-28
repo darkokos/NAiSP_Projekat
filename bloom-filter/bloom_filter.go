@@ -46,8 +46,8 @@ func bitAndByteIndex(bitFieldIndex uint64, bitFieldLen uint64) (byteIndex uint64
 	return byteIndex, bitIndex
 }
 
-//Funkcija dodaje element u bloom filter.
-func (bloomFilter BloomFilter) add(key []byte) {
+// Funkcija dodaje element u bloom filter.
+func (bloomFilter BloomFilter) Add(key []byte) {
 
 	//bitIndices := make(uint64[], bloomFilter.HashFunctionCount)
 	for _, hashFn := range bloomFilter.HashFunctions {
@@ -60,7 +60,7 @@ func (bloomFilter BloomFilter) add(key []byte) {
 
 // Funkcija proverava da li je element mozda prisutan u bloom filteru.
 // Vraca true ako element mozda jeste prisutan, a false ako sigurno nije.
-func (bloomFilter BloomFilter) find(key []byte) bool {
+func (bloomFilter BloomFilter) Find(key []byte) bool {
 
 	for _, hashFn := range bloomFilter.HashFunctions {
 		byteIndex, bitIndex := bitAndByteIndex(hashFn.Hash(key), uint64(bloomFilter.BitArrayLen))

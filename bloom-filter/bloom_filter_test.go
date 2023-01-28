@@ -26,11 +26,11 @@ func TestWords(t *testing.T) {
 	t.Log("False-positive rate: ", falsePositiveRate)
 
 	for _, word := range word_present {
-		bloomFilter.add([]byte(word))
+		bloomFilter.Add([]byte(word))
 	}
 
 	for _, word := range word_present {
-		found := bloomFilter.find([]byte(word))
+		found := bloomFilter.Find([]byte(word))
 		if !found {
 			t.Fatalf("%s je trebao da bude nadjen, a nije", word)
 		} else {
@@ -39,7 +39,7 @@ func TestWords(t *testing.T) {
 	}
 
 	for _, word := range word_absent {
-		found := bloomFilter.find([]byte(word))
+		found := bloomFilter.Find([]byte(word))
 		if !found {
 			t.Log(word, " nije nadjen")
 		} else {
@@ -78,7 +78,7 @@ func TestSerializedStructEquality(t *testing.T) {
 	t.Log("False-positive rate: ", falsePositiveRate)
 
 	for _, word := range word_present {
-		bloomFilter.add([]byte(word))
+		bloomFilter.Add([]byte(word))
 	}
 
 	deserializedBloomFilter := Deserialize(bloomFilter.Serialize())
@@ -137,13 +137,13 @@ func TestSerializeDeserializeWithOperations(t *testing.T) {
 	t.Log("False-positive rate: ", falsePositiveRate)
 
 	for _, word := range word_present {
-		bloomFilter.add([]byte(word))
+		bloomFilter.Add([]byte(word))
 	}
 
 	bloomFilter = Deserialize(bloomFilter.Serialize())
 
 	for _, word := range word_present {
-		found := bloomFilter.find([]byte(word))
+		found := bloomFilter.Find([]byte(word))
 		if !found {
 			t.Fatalf("%s je trebao da bude nadjen, a nije", word)
 		} else {
@@ -152,7 +152,7 @@ func TestSerializeDeserializeWithOperations(t *testing.T) {
 	}
 
 	for _, word := range word_absent {
-		found := bloomFilter.find([]byte(word))
+		found := bloomFilter.Find([]byte(word))
 		if !found {
 			t.Log(word, " nije nadjen")
 		} else {

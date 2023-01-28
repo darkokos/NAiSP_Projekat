@@ -15,7 +15,7 @@ func CheckSSTEntryCRC(entry *SSTableEntry) bool {
 	crc_calculated := crc32.NewIEEE()
 
 	b := make([]byte, wal.TIMESTAMP_SIZE)
-	binary.BigEndian.PutUint64(b, uint64(entry.Timestamp))
+	binary.LittleEndian.PutUint64(b, uint64(entry.Timestamp))
 	crc_calculated.Write(b)
 
 	b = make([]byte, wal.TOMBSTONE_SIZE)
@@ -26,12 +26,12 @@ func CheckSSTEntryCRC(entry *SSTableEntry) bool {
 
 	keySize := entry.KeySize
 	b = make([]byte, wal.KEY_SIZE_SIZE)
-	binary.BigEndian.PutUint64(b, keySize)
+	binary.LittleEndian.PutUint64(b, keySize)
 	crc_calculated.Write(b)
 
 	valueSize := entry.ValueSize
 	b = make([]byte, wal.VALUE_SIZE_SIZE)
-	binary.BigEndian.PutUint64(b, valueSize)
+	binary.LittleEndian.PutUint64(b, valueSize)
 	crc_calculated.Write(b)
 
 	crc_calculated.Write(entry.Key)
