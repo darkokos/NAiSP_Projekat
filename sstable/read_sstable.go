@@ -2,7 +2,6 @@ package sstable
 
 import (
 	"encoding/binary"
-	"fmt"
 	"io"
 	"os"
 
@@ -66,7 +65,7 @@ func ReadOneSSTEntry(sstableFile *os.File) (entry *SSTableEntry, ok bool) {
 	key_size := binary.LittleEndian.Uint64(key_size_bytes)
 	value_size := binary.LittleEndian.Uint64(value_size_bytes)
 
-	fmt.Println(crc, timestamp, tombstone, key_size, value_size)
+	// TODO: key_size i value_size mogu biti poprilicno veliki, treba se zastiti od toga
 	key_bytes := make([]byte, key_size)
 	value_bytes := make([]byte, value_size)
 
@@ -80,7 +79,7 @@ func ReadOneSSTEntry(sstableFile *os.File) (entry *SSTableEntry, ok bool) {
 		return nil, false
 	}
 
-	return &SSTableEntry{
+	entry = &SSTableEntry{
 		CRC:       crc,
 		Timestamp: int64(timestamp),
 		Tombstone: tombstone,
@@ -88,5 +87,12 @@ func ReadOneSSTEntry(sstableFile *os.File) (entry *SSTableEntry, ok bool) {
 		ValueSize: value_size,
 		Key:       key_bytes,
 		Value:     value_bytes,
-	}, true
+	}
+
+	if CheckSSTEntryCRC(entry) {
+		return entry, true
+	} else {
+		os.Stderr.WriteString("CRC provera nije uspela")
+		return nil, false
+	}
 }

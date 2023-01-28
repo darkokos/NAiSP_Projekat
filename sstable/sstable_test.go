@@ -54,3 +54,31 @@ func TestSSTableReadNonExistentFile(t *testing.T) {
 		t.Fatalf("Citanje iz postojeceg fajla nije trebalo da uspe")
 	}
 }
+
+func TestSSTableCRCFail(t *testing.T) {
+	f, err := os.OpenFile("test_table.db", os.O_RDWR, 0222)
+
+	if err != nil {
+		t.Fatalf("Greska u otvaranju SSTabele")
+	}
+
+	f.Seek(0, 0)
+
+	// Upisivanje pogresnog crc-a
+	f.Write([]byte{0, 0, 0, 0})
+
+	f.Close()
+
+	f, err = os.Open("test_table.db")
+
+	if err != nil {
+		t.Fatalf("Greska u otvaranju SSTabele")
+	}
+
+	_, ok := ReadOneSSTEntry(f)
+	f.Close()
+
+	if ok {
+		t.Fatalf("Citanja zapisa sa pogresnim CRC-om ne bi trebalo da uspe")
+	}
+}
