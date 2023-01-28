@@ -26,6 +26,7 @@ import (
 //   Value = Vrednost
 //   Timestamp = Vreme kreiranja podataka izrazeno u nanosekundama
 
+//TODO: Pravljenje dodatnih delova izdvojiti
 func writeSSTable(filename string, sortedEntries []*memtable.MemTableEntry) {
 	f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
@@ -38,7 +39,23 @@ func writeSSTable(filename string, sortedEntries []*memtable.MemTableEntry) {
 		panic(err)
 	}
 
+	//TODO: Ime summary fajla
+	summaryFile, err := os.OpenFile("summary.db", os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		panic(err)
+	}
+
+	writeSummaryHeader(summaryFile, sortedEntries[0], sortedEntries[len(sortedEntries)-1])
+
+	current_begin := sortedEntries[0]
+	summary_density := 2 // TODO: Popunjenost summary-a treba da se konfigurise
+	until_next_summary_entry := summary_density
+	current_index_offset := int64(0)
+
 	for _, entry := range sortedEntries {
+		if until_next_summary_entry == summary_density {
+			current_begin = entry
+		}
 		key := entry.Key
 		//value := entry.Value
 		offset, err := f.Seek(0, io.SeekCurrent)
@@ -51,6 +68,20 @@ func writeSSTable(filename string, sortedEntries []*memtable.MemTableEntry) {
 		//fmt.Println("Kljuc: ", key, "Vrednost: ", value)
 		writeSSTableEntry(f, entry)
 
+		until_next_summary_entry--
+		if until_next_summary_entry == 0 {
+			until_next_summary_entry = summary_density
+			writeSummaryEntry(summaryFile, current_begin, entry, current_index_offset)
+			current_index_offset, err = indexFile.Seek(0, io.SeekCurrent)
+			if err != nil {
+				// handle error
+				panic(err)
+			}
+		}
+	}
+
+	if until_next_summary_entry != summary_density {
+		writeSummaryEntry(summaryFile, current_begin, sortedEntries[len(sortedEntries)-1], current_index_offset)
 	}
 
 	f.Close()
@@ -122,6 +153,7 @@ func writeSSTableEntry(sstableFile *os.File, entry *memtable.MemTableEntry) {
 	}
 }
 
+// Format zapisa u indeksu je duzina kljuca (8B) - offset (8B) - kljuc(?B)
 func writeIndexEntry(indexFile *os.File, key string, offset uint64) {
 
 	binary.Write(indexFile, binary.LittleEndian, uint64(len(key)))
