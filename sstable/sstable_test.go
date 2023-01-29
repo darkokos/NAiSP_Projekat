@@ -24,7 +24,7 @@ func TestSSTable(t *testing.T) {
 
 func TestReadWholeSSTable(t *testing.T) {
 
-	iter := getSSTableIterator("test_table-Data.db")
+	iter := GetSSTableIterator("test_table-Data.db")
 
 	if iter == nil {
 		t.Fatalf("Doslo je do greske u otvaranju sstabele")

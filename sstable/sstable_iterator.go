@@ -57,7 +57,7 @@ func (iter *SSTableIterator) SeekAndClose(key []byte) *SSTableEntry {
 
 	//TODO: Mozda ne bi trebalo da radimo ova silna pretvaranja u stringove
 	key_string := string(key)
-	defer iter.sstFile.Close()
+	//defer iter.sstFile.Close()
 
 	for entry := iter.Next(); iter.Valid; entry = iter.Next() {
 		if string(entry.Key) == key_string {
@@ -74,7 +74,7 @@ func (iter *SSTableIterator) Close() {
 	iter.Valid = false
 }
 
-func getSSTableIterator(filename string) *SSTableIterator {
+func GetSSTableIterator(filename string) *SSTableIterator {
 	sstFile, err := os.Open(filename)
 	if err != nil {
 		return nil

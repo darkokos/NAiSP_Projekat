@@ -2,6 +2,7 @@ package sstable
 
 import (
 	"encoding/binary"
+	"io"
 	"os"
 )
 
@@ -11,12 +12,19 @@ type IndexEntry struct {
 	Key     string
 }
 
+// Funkcija cita sledeci zapis indeksa
+// Vraca procitani zapis i true ako ima zapisa i uspesno je procitan
+// Vraca nil i true ako nema vise zapisa
+// Varac nil i false ako je doslo do greske
 func readIndexEntry(indexFile *os.File) (*IndexEntry, bool) {
 	key_size_bytes := make([]byte, 8)
 	offset_bytes := make([]byte, 8)
 
 	err := binary.Read(indexFile, binary.LittleEndian, key_size_bytes)
 	if err != nil {
+		if err == io.EOF {
+			return nil, true
+		}
 		return nil, false
 	}
 
