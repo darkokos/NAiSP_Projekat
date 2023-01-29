@@ -51,3 +51,33 @@ func readFilter(f *os.File) *bloomfilter.BloomFilter {
 	filter := bloomfilter.Deserialize(bloom_filter_bytes)
 	return &filter
 }
+
+func ReadFilterAsSeparateFile(filename string) *bloomfilter.BloomFilter {
+	filterFile, err := os.Open(filename)
+	defer filterFile.Close()
+
+	if err != nil {
+		return nil
+	}
+
+	filter := readFilter(filterFile)
+
+	return filter
+}
+
+// Cita filter iz zasebnog fajla ili objedinjene sstable sa imenom filename
+// Funkcija proverava da li je fajl objedinjena sstabela ili filter
+// Vraca procitani bloom filter ili nil ako je doslo do greske
+/*func ReadFilterFromFile(filename string) *bloomfilter.BloomFilter {
+
+	filterFile, err := os.Open(filename)
+
+	if err != nil {
+		return nil
+	}
+
+	//Problem - sta ako se bloom filter zavrsava sa bas tih 8 bitova
+	//Resenje - ipak 2 moda citanja na osnovu sstabele
+	magic_number := readMagicNumber(filterFile)
+}
+*/

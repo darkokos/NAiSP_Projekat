@@ -91,7 +91,7 @@ func (iter *SummaryIterator) Next() *SummaryEntry {
 }
 
 // Nalazi zapis u summary-u u koji updada kljuc string.
-// Iterator ostaje validan u ovom slucaju.
+// Iterator ostaje validan u ovom slucaju i bice spreman za citanje zapisa nakon vracenog.
 // Ili vraca nil, invalidira iterator i zatvara fajl
 func (iter *SummaryIterator) Seek(key string) *SummaryEntry {
 

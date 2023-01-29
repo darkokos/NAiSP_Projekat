@@ -10,6 +10,7 @@ import (
 	"os"
 
 	wal "github.com/darkokos/NAiSP_Projekat/WAL"
+	bloomfilter "github.com/darkokos/NAiSP_Projekat/bloom-filter"
 )
 
 // Funkcija pokusava da procita sledeci zapis u SSTabeli na koju pokazuje fajl
@@ -96,93 +97,65 @@ func ReadOneSSTEntry(sstableFile *os.File) (entry *SSTableEntry, ok bool) {
 	if CheckSSTEntryCRC(entry) {
 		return entry, true
 	} else {
-		os.Stderr.WriteString("CRC provera nije uspela")
+		os.Stderr.WriteString("CRC provera nije uspela\n")
 		return nil, false
 	}
 }
 
-//TODO: Wrapper oko ovoga za imena fajlova
+func ReadOneSSTEntryWithKey(key []byte, sstFileName string, indexFilename string, summaryFilename string, filterFilename string) *SSTableEntry {
 
-func readOneSSTEntryWithKeyMultipleFiles(key []byte, filterFile *os.File, summaryFile *os.File, indexFile *os.File, sstFile *os.File) (entry *SSTableEntry) {
 	key_string := string(key)
-	filter := readFilter(filterFile)
 
-	if !filter.Find(key) {
+	summaryIterator := &SummaryIterator{}
+	indexIterator := &IndexIterator{}
+	sstableIterator := &SSTableIterator{}
+	filter := &bloomfilter.BloomFilter{}
+
+	if indexFilename != "" {
+		summaryIterator = getSummaryIteratorFromFile(summaryFilename)
+		indexIterator = getIndexIteratorFromIndexFile(indexFilename)
+		sstableIterator = GetSSTableIterator(sstFileName)
+		filter = ReadFilterAsSeparateFile(filterFilename)
+
+	} else {
+		//TODO: Pretraga jednog fajla
+		//Iscitaj gde se sta nalazi i postavi offsete
+		//fmt.Println("Nije implementirano")
+	}
+
+	if summaryIterator == nil || indexIterator == nil || sstableIterator == nil || filter == nil {
 		return nil
 	}
 
-	summaryEntry := findSummaryEntry(summaryFile, key)
+	if !filter.Find(key) {
+		fmt.Println("Nije prosao filter")
+		return nil
+	}
+
+	summaryEntry := summaryIterator.Seek(key_string)
+
 	if summaryEntry == nil {
 		return nil
 	}
 
-	//stat, _ := os.Stat(indexFile.Name())
-	//fmt.Println("Velicina indeksa: ", stat.Size())
-	_, err := indexFile.Seek(summaryEntry.Offset, io.SeekCurrent)
-	if err != nil {
-		fmt.Println("Greska pri citanju indeksa: ", err)
+	indexIterator.SeekToOffset(summaryEntry.Offset)
+
+	// Znamo da se kljuc sigurno ne nalazi u opsegu sledeceg summary entry-a pa
+	// to mozemo koristiti za raniji prekid pretrage
+	// Takodje ne moramo gledati da li je string manji od krajnjeg string
+	// za dati summary zapis
+	nextSummaryEntry := summaryIterator.Next()
+
+	if nextSummaryEntry != nil {
+		indexIterator.SetEndOffset(nextSummaryEntry.Offset)
+	}
+
+	indexEntry := indexIterator.SeekAndClose(key_string)
+
+	if indexEntry == nil {
 		return nil
-	}
-
-	currentIndexEntry, _ := readIndexEntry(indexFile)
-
-	for currentIndexEntry != nil && currentIndexEntry.Key <= summaryEntry.LastKey {
-		if currentIndexEntry.Key == key_string {
-			_, err := sstFile.Seek(currentIndexEntry.Offset, io.SeekCurrent)
-			if err != nil {
-				fmt.Println("Greska: ", err)
-				fmt.Println(int(currentIndexEntry.Offset))
-				return nil
-			}
-
-			sstEntry, _ := ReadOneSSTEntry(sstFile)
-			return sstEntry
-		}
-		currentIndexEntry, _ = readIndexEntry(indexFile)
-	}
-
-	return nil
-
-	//Proveri opseg summary-a
-	//Citaj summary dok ne naidjes
-	//Procitaj indeks
-	//Procitaj entry
-}
-
-func ReadOneSSTEntryWithKey(key []byte, sstFileName string, indexFilename string, summaryFilename string, filterFilename string) *SSTableEntry {
-
-	sstFile, err := os.Open(sstFileName)
-
-	if err != nil {
-		return nil
-	}
-	defer sstFile.Close()
-
-	// Slucaj citanja iz vise fajlova
-	if indexFilename != "" {
-		filterFile, err := os.Open(filterFilename)
-
-		if err != nil {
-			return nil
-		}
-		defer filterFile.Close()
-
-		summaryFile, err := os.Open(summaryFilename)
-
-		if err != nil {
-			return nil
-		}
-		defer summaryFile.Close()
-
-		indexFile, err := os.Open(indexFilename)
-		if err != nil {
-			return nil
-		}
-
-		return readOneSSTEntryWithKeyMultipleFiles(key, filterFile, summaryFile, indexFile, sstFile)
 	} else {
-		//TODO: Citanje iz sstable-a koji je jedan fajl
+		sstableIterator.SeekToOffset(indexEntry.Offset)
+		return sstableIterator.Next()
 	}
-
-	return nil
 }

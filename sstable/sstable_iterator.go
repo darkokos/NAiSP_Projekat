@@ -53,6 +53,16 @@ func (iter *SSTableIterator) Next() *SSTableEntry {
 
 }
 
+func (iter *SSTableIterator) SeekToOffset(offset int64) {
+	_, err := iter.sstFile.Seek(offset, io.SeekCurrent)
+	if err != nil {
+		iter.Valid = false
+		iter.Ok = false
+		iter.sstFile.Close()
+	}
+
+}
+
 func (iter *SSTableIterator) SeekAndClose(key []byte) *SSTableEntry {
 
 	//TODO: Mozda ne bi trebalo da radimo ova silna pretvaranja u stringove
