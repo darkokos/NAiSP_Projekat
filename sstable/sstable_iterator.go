@@ -1,9 +1,10 @@
 package sstable
 
 import (
-	"encoding/binary"
 	"io"
 	"os"
+
+	"github.com/darkokos/NAiSP_Projekat/utils"
 )
 
 type SSTableIterator struct {
@@ -79,29 +80,16 @@ func getSSTableIterator(filename string) *SSTableIterator {
 		return nil
 	}
 
-	stat, err := os.Stat(filename)
-	if err != nil {
+	magic_number := readMagicNumber(sstFile)
+
+	size := utils.GetFileSize(filename)
+
+	if size == -1 {
 		return nil
 	}
-
-	size := stat.Size()
-
-	magic_number_offset := size - SSTABLE_MAGIC_NUMBER_SIZE
-
-	_, err = sstFile.Seek(magic_number_offset, io.SeekStart)
-	if err != nil {
-		return nil
-	}
-
-	magic_number_bytes := make([]byte, 8)
-	err = binary.Read(sstFile, binary.LittleEndian, magic_number_bytes)
-	if err != nil {
-		return nil
-	}
-	magic_number := binary.LittleEndian.Uint64(magic_number_bytes)
 
 	if magic_number == SSTABLE_MULTI_FILE_MAGIC_NUMBER {
-		end_of_sstable := magic_number_offset
+		end_of_sstable := size - SSTABLE_MAGIC_NUMBER_SIZE
 		_, err := sstFile.Seek(0, io.SeekStart)
 		if err != nil {
 			return nil
