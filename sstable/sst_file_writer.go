@@ -22,6 +22,7 @@ type SSTFileWriter struct {
 	next_summary_key    []byte
 	next_summary_offset int64
 	last_key_written    []byte
+	first_key_written   []byte
 	valuesWritten       [][]byte // Mora zbog merkle stabla
 	Ok                  bool
 }
@@ -58,6 +59,12 @@ func (writer *SSTFileWriter) Open(base_name string) {
 		}
 
 		summaryFile, err := os.OpenFile(base_name+"-Summary.db", os.O_RDWR|os.O_CREATE, 0666)
+		if err != nil {
+			file_open_fail = true
+		}
+
+		// Pisemo bajtove koji ce predstavljati pokazivac ka footer-u summary-a
+		err = binary.Write(summaryFile, binary.LittleEndian, []byte{0, 0, 0, 0, 0, 0, 0, 0})
 		if err != nil {
 			file_open_fail = true
 		}
@@ -101,6 +108,7 @@ func (writer *SSTFileWriter) Open(base_name string) {
 }
 
 func (writer *SSTFileWriter) Put(entry *SSTableEntry) {
+	//TODO: Ne znamo sta je pocetak a sta kraj summary-a. Header ce morati da postane footer.
 	summary_density := 3
 	if writer.is_multiple_files {
 		if writer.records_written%summary_density == 0 {
@@ -120,6 +128,12 @@ func (writer *SSTFileWriter) Put(entry *SSTableEntry) {
 		writeSSTableEntry(writer.sstFile, entry)
 
 		writer.valuesWritten = append(writer.valuesWritten, entry.Value)
+		writer.last_key_written = entry.Key
+
+		if writer.records_written == 0 {
+			writer.first_key_written = entry.Key
+		}
+
 		writer.records_written++
 		if writer.records_written%summary_density == 0 {
 			writeSummaryEntry(writer.summaryFile, writer.next_summary_key, entry.Key, writer.next_summary_offset)
@@ -167,20 +181,45 @@ func (writer *SSTFileWriter) Finish() {
 			writeSummaryEntry(writer.summaryFile, writer.next_summary_key, writer.last_key_written, writer.next_summary_offset)
 		}
 
-		// I sta cemo sad
-		// Imamo records written
-		// Imamo sstable
-		// I iterator :)
-		// U oba slucaja smo pisali samo u sstable
+		summaryFooterOffset, err := writer.summaryFile.Seek(0, io.SeekCurrent)
+		if err != nil {
+			// handle error
+			panic(err)
+		}
 
-		// Zapisivanje bloom filtera
-		err := binary.Write(writer.filterFile, binary.LittleEndian, serialized_length)
+		writeSummaryHeader(writer.summaryFile, writer.first_key_written, writer.last_key_written)
+
+		_, err = writer.summaryFile.Seek(0, io.SeekStart)
+		if err != nil {
+			// handle error
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		// Pisanje offseta za footer od summary-a
+		err = binary.Write(writer.summaryFile, binary.LittleEndian, uint64(summaryFooterOffset))
 		if err != nil {
 			writer.Ok = false
 			writer.CloseFiles()
 			return
 		}
 
+		// I sta cemo sad
+		// Imamo records written
+		// Imamo sstable
+		// I iterator :)
+		// U oba slucaja smo pisali samo u sstable
+
+		// Zapisivanje duzine bloom filtera
+		err = binary.Write(writer.filterFile, binary.LittleEndian, serialized_length)
+		if err != nil {
+			writer.Ok = false
+			writer.CloseFiles() // TODO: CloseFiles se moze defer-ovati
+			return
+		}
+
+		// Zapisivanje bloom filtera
 		binary.Write(writer.filterFile, binary.LittleEndian, serialized_filter)
 		if err != nil {
 			writer.Ok = false
@@ -197,6 +236,7 @@ func (writer *SSTFileWriter) Finish() {
 			return
 		}
 
+		// Zapsivanje TOC-a
 		toc_contents := writer.sstFile.Name() + "\n" + writer.indexFile.Name() +
 			"\n" + writer.summaryFile.Name() + "\n" + writer.filterFile.Name() + "\n" +
 			writer.metadataFile.Name() + writer.tocFile.Name()
@@ -208,6 +248,7 @@ func (writer *SSTFileWriter) Finish() {
 			return
 		}
 
+		// Magicni broj
 		err = binary.Write(writer.sstFile, binary.LittleEndian, SSTABLE_MULTI_FILE_MAGIC_NUMBER)
 		if err != nil {
 			panic(err)
