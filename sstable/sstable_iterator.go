@@ -44,14 +44,19 @@ func (iter *SSTableIterator) Next() *SSTableEntry {
 	iter.Valid = (entry != nil)
 	iter.Ok = ok
 
+	if !iter.Valid {
+		iter.sstFile.Close()
+	}
+
 	return entry
 
 }
 
-func (iter *SSTableIterator) Seek(key []byte) *SSTableEntry {
+func (iter *SSTableIterator) SeekAndClose(key []byte) *SSTableEntry {
 
 	//TODO: Mozda ne bi trebalo da radimo ova silna pretvaranja u stringove
 	key_string := string(key)
+	defer iter.sstFile.Close()
 
 	for entry := iter.Next(); iter.Valid; entry = iter.Next() {
 		if string(entry.Key) == key_string {
@@ -60,6 +65,12 @@ func (iter *SSTableIterator) Seek(key []byte) *SSTableEntry {
 	}
 
 	return nil
+}
+
+// Zatvara fajl iteratora i invalidira ga
+func (iter *SSTableIterator) Close() {
+	iter.sstFile.Close()
+	iter.Valid = false
 }
 
 func getSSTableIterator(filename string) *SSTableIterator {
