@@ -6,7 +6,6 @@ import (
 	"os"
 
 	wal "github.com/darkokos/NAiSP_Projekat/WAL"
-	"github.com/darkokos/NAiSP_Projekat/memtable"
 )
 
 type SummaryEntry struct {
@@ -16,12 +15,12 @@ type SummaryEntry struct {
 }
 
 // Pise deo summary-a koji sadrzi granice sstabele
-func writeSummaryHeader(f *os.File, first *memtable.MemTableEntry, last *memtable.MemTableEntry) {
+func writeSummaryHeader(f *os.File, first []byte, last []byte) {
 	begin_key_size_bytes := make([]byte, wal.KEY_SIZE_SIZE)
 	end_key_size_bytes := make([]byte, wal.KEY_SIZE_SIZE)
 
-	binary.LittleEndian.PutUint64(begin_key_size_bytes, uint64(len(first.Key)))
-	binary.LittleEndian.PutUint64(end_key_size_bytes, uint64(len(last.Key)))
+	binary.LittleEndian.PutUint64(begin_key_size_bytes, uint64(len(first)))
+	binary.LittleEndian.PutUint64(end_key_size_bytes, uint64(len(last)))
 
 	err := binary.Write(f, binary.LittleEndian, begin_key_size_bytes)
 	if err != nil {
@@ -33,12 +32,12 @@ func writeSummaryHeader(f *os.File, first *memtable.MemTableEntry, last *memtabl
 		panic(err)
 	}
 
-	err = binary.Write(f, binary.LittleEndian, first.Key)
+	err = binary.Write(f, binary.LittleEndian, first)
 	if err != nil {
 		panic(err)
 	}
 
-	err = binary.Write(f, binary.LittleEndian, last.Key)
+	err = binary.Write(f, binary.LittleEndian, last)
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +45,7 @@ func writeSummaryHeader(f *os.File, first *memtable.MemTableEntry, last *memtabl
 }
 
 //Ospezi u summary-u su intervali oblika [pocetak, kraj)
-func writeSummaryEntry(f *os.File, first *memtable.MemTableEntry, last *memtable.MemTableEntry, offset int64) {
+func writeSummaryEntry(f *os.File, first []byte, last []byte, offset int64) {
 	writeSummaryHeader(f, first, last)
 
 	offset_bytes := make([]byte, 8)
