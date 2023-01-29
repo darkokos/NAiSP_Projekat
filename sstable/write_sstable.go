@@ -11,6 +11,12 @@ import (
 	"github.com/darkokos/NAiSP_Projekat/memtable"
 )
 
+const (
+	SSTABLE_MAGIC_NUMBER_SIZE         = 8
+	SSTABLE_MULTI_FILE_MAGIC_NUMBER   = uint64(0x473700DD14E7F08B) // Magicni broj za sstabelu u rezimu gde je jedna SSTabele sacinjena iz vise fajlova
+	SSTABALE_SINGLE_FILE_MAGIC_NUMBER = uint64(0xE14695378B12D2F8) // Magicni za sstabelu u rezimu gde je su svi elementi SSTabele u jednom fajlu
+)
+
 // Funkcija zapisuje niz MemTableEntry-a u SSTable sa imenom filename.
 //
 // Format zapisa SSTable-a:
@@ -25,7 +31,13 @@ import (
 //   Key = Kljuc
 //   Value = Vrednost
 //   Timestamp = Vreme kreiranja podataka izrazeno u nanosekundama
-
+//
+// Format sstabele ako su elementi u zasebnim fajlovima:
+// [data block 1]
+// [data block 2]
+// ...
+// [data block n]
+// [magic number]
 //TODO: Pravljenje dodatnih delova izdvojiti
 func writeSSTableMultipleFiles(filename_prefix string, sortedEntries []*memtable.MemTableEntry) {
 	f, err := os.OpenFile(filename_prefix+"-Data.db", os.O_RDWR|os.O_CREATE, 0666)
@@ -91,6 +103,11 @@ func writeSSTableMultipleFiles(filename_prefix string, sortedEntries []*memtable
 	writeMetadataSeparateFile(sortedEntries, filename_prefix+"-Metadata.txt")
 
 	//TODO: Zapisi TOC
+
+	err = binary.Write(f, binary.LittleEndian, SSTABLE_MULTI_FILE_MAGIC_NUMBER)
+	if err != nil {
+		panic(err)
+	}
 
 	f.Close()
 	indexFile.Close()

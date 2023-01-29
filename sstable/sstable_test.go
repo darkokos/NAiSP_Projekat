@@ -24,25 +24,25 @@ func TestSSTable(t *testing.T) {
 
 func TestReadWholeSSTable(t *testing.T) {
 
-	f, err := os.Open("test_table-Data.db")
+	iter := getSSTableIterator("test_table-Data.db")
 
-	if err != nil {
-		t.Fatalf("Problem u otvaranju fajla")
+	if iter == nil {
+		t.Fatalf("Doslo je do greske u otvaranju sstabele")
 	}
 
-	entry, ok := ReadOneSSTEntry(f)
-
-	for entry != nil {
+	number_of_entries := 0
+	for entry := iter.Next(); iter.Valid; entry = iter.Next() {
 		fmt.Println("Kljuc: ", entry.Key, " Vrednost: ", entry.Value)
-		entry, ok = ReadOneSSTEntry(f)
-
-		if !ok {
-			t.Fatalf("Doslo je do greske u citanju fajla")
-		}
-
+		number_of_entries++
 	}
 
-	f.Close()
+	if number_of_entries != 5 {
+		t.Fatalf("Nisu procitani svi redovi")
+	}
+
+	if !iter.Ok {
+		t.Fatalf("Doslo je do greske u citanju sstable")
+	}
 }
 
 func TestReadSSTableByKeyMultipleFiles(t *testing.T) {
