@@ -121,4 +121,12 @@ func TestSSTableCRCFail(t *testing.T) {
 	if ok {
 		t.Fatalf("Citanja zapisa sa pogresnim CRC-om ne bi trebalo da uspe")
 	}
+
+	iter := GetSSTableIterator("test_table-Data.db")
+
+	iter.Next()
+
+	if iter.Valid {
+		t.Fatalf("Citanje zapisa sa pogresnim CRC-om bi trebalo da invalidira iterator")
+	}
 }
