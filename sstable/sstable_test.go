@@ -19,12 +19,12 @@ func TestSSTable(t *testing.T) {
 	sorted_entries = append(sorted_entries, memtable.CreateEntry([]byte("Momir"), []byte{39, 21, 1, 2, 3}))
 	sorted_entries = append(sorted_entries, memtable.CreateEntry([]byte("Vuk"), []byte{52, 21}))
 
-	writeSSTable("test_table.db", sorted_entries)
+	writeSSTableMultipleFiles("test_table", sorted_entries)
 }
 
 func TestReadWholeSSTable(t *testing.T) {
 
-	f, err := os.Open("test_table.db")
+	f, err := os.Open("test_table-Data.db")
 
 	if err != nil {
 		t.Fatalf("Problem u otvaranju fajla")
@@ -47,7 +47,7 @@ func TestReadWholeSSTable(t *testing.T) {
 
 func TestReadSSTableByKeyMultipleFiles(t *testing.T) {
 
-	entry := ReadOneSSTEntryWithKey([]byte("Gojko"), "test_table.db", "index.db", "summary.db", "filter.db")
+	entry := ReadOneSSTEntryWithKey([]byte("Gojko"), "test_table-Data.db", "test_table-Index.db", "test_table-Summary.db", "test_table-Filter.db")
 
 	if entry == nil {
 		t.Fatalf("Trebalo je da nadje entry")
@@ -57,7 +57,7 @@ func TestReadSSTableByKeyMultipleFiles(t *testing.T) {
 		}
 	}
 
-	entry = ReadOneSSTEntryWithKey([]byte("Vuk"), "test_table.db", "index.db", "summary.db", "filter.db")
+	entry = ReadOneSSTEntryWithKey([]byte("Vuk"), "test_table-Data.db", "test_table-Index.db", "test_table-Summary.db", "test_table-Filter.db")
 
 	if entry == nil {
 		t.Fatalf("Trebalo je da nadje entry")
@@ -67,7 +67,7 @@ func TestReadSSTableByKeyMultipleFiles(t *testing.T) {
 		}
 	}
 
-	entry = ReadOneSSTEntryWithKey([]byte("Darko"), "test_table.db", "index.db", "summary.db", "filter.db")
+	entry = ReadOneSSTEntryWithKey([]byte("Darko"), "test_table-Data.db", "test_table-Index.db", "test_table-Summary.db", "test_table-Filter.db")
 
 	if entry == nil {
 		t.Fatalf("Trebalo je da nadje entry")
@@ -77,7 +77,7 @@ func TestReadSSTableByKeyMultipleFiles(t *testing.T) {
 		}
 	}
 
-	entry = ReadOneSSTEntryWithKey([]byte("Momia"), "test_table.db", "index.db", "summary.db", "filter.db")
+	entry = ReadOneSSTEntryWithKey([]byte("Momia"), "test_table-Data.db", "test_table-Index.db", "test_table-Summary.db", "test_table-Filter.db")
 
 	if entry != nil {
 		t.Fatalf("Nije trebalo da nadje ovo")
@@ -96,7 +96,7 @@ func TestSSTableReadNonExistentFile(t *testing.T) {
 }
 
 func TestSSTableCRCFail(t *testing.T) {
-	f, err := os.OpenFile("test_table.db", os.O_RDWR, 0222)
+	f, err := os.OpenFile("test_table-Data.db", os.O_RDWR, 0222)
 
 	if err != nil {
 		t.Fatalf("Greska u otvaranju SSTabele")
@@ -109,7 +109,7 @@ func TestSSTableCRCFail(t *testing.T) {
 
 	f.Close()
 
-	f, err = os.Open("test_table.db")
+	f, err = os.Open("test_table-Data.db")
 
 	if err != nil {
 		t.Fatalf("Greska u otvaranju SSTabele")
