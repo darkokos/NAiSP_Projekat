@@ -8,6 +8,11 @@ import (
 	"github.com/darkokos/NAiSP_Projekat/utils"
 )
 
+//Format summary-a:
+// Offset/Pokazivac ka footer-u (8B)
+// [Velicina pocetnog kljuca (8B) | Velicina krajnjeg kljuca (8B) | Pocetni kljuc (?B) | Krajnji kljuc (?B) | Offset u indeksu (8B)] x N
+// Footer: [Velicina prvog kljuca (8B) | Velicina poslednjeg kljuca (8B) | Prvi kljuc (?B) | Poslednji kljuc (?B)]
+
 type SummaryIterator struct {
 	summaryFile *os.File
 	end_offset  int64
@@ -30,21 +35,33 @@ func getSummaryIteratorFromFile(filename string) *SummaryIterator {
 		return nil
 	}
 
-	size_bytes := make([]byte, 8)
+	bytes_read := make([]byte, 8)
 
-	err = binary.Read(summary_file, binary.LittleEndian, size_bytes)
+	err = binary.Read(summary_file, binary.LittleEndian, bytes_read)
 	if err != nil {
 		return nil
 	}
 
-	first_key_size := binary.LittleEndian.Uint64(size_bytes)
+	footerOffset := int64(binary.LittleEndian.Uint64(bytes_read))
 
-	err = binary.Read(summary_file, binary.LittleEndian, size_bytes)
+	_, err = summary_file.Seek(footerOffset, io.SeekStart)
 	if err != nil {
 		return nil
 	}
 
-	last_key_size := binary.LittleEndian.Uint64(size_bytes)
+	err = binary.Read(summary_file, binary.LittleEndian, bytes_read)
+	if err != nil {
+		return nil
+	}
+
+	first_key_size := binary.LittleEndian.Uint64(bytes_read)
+
+	err = binary.Read(summary_file, binary.LittleEndian, bytes_read)
+	if err != nil {
+		return nil
+	}
+
+	last_key_size := binary.LittleEndian.Uint64(bytes_read)
 
 	//TODO: Ozbediti se od lose ucitanih (ovo se moze uraditi proverom u odnosu na velicinu fajla)
 	first_key := make([]byte, first_key_size)
@@ -52,7 +69,13 @@ func getSummaryIteratorFromFile(filename string) *SummaryIterator {
 	binary.Read(summary_file, binary.LittleEndian, first_key)
 	binary.Read(summary_file, binary.LittleEndian, last_key)
 
-	iter := SummaryIterator{summaryFile: summary_file, end_offset: size, begin_key: string(first_key), end_key: string(last_key), Valid: true, Ok: true}
+	// Vracamo se na poziciju prvog elementa summary-a
+	_, err = summary_file.Seek(8, io.SeekStart) // TODO: Eliminisati ovaj magicni broj
+	if err != nil {
+		return nil
+	}
+
+	iter := SummaryIterator{summaryFile: summary_file, end_offset: footerOffset, begin_key: string(first_key), end_key: string(last_key), Valid: true, Ok: true}
 
 	return &iter
 }

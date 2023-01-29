@@ -32,7 +32,7 @@ func TestReadWholeSSTable(t *testing.T) {
 
 	number_of_entries := 0
 	for entry := iter.Next(); iter.Valid; entry = iter.Next() {
-		fmt.Println("Kljuc: ", entry.Key, " Vrednost: ", entry.Value)
+		fmt.Println("Kljuc: ", string(entry.Key), " Vrednost: ", entry.Value)
 		number_of_entries++
 	}
 
