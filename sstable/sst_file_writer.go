@@ -41,9 +41,7 @@ func GetSSTFileWriter(mulitple_files bool) SSTFileWriter {
 // Ako je doslo do greske, atribut Ok ce biti postavljen na false i bilo koji
 // otvoreni fajlovi ce biti zatvoreni.
 //
-// Interpretacija parametra base name:
-// Ako je is_multiple_files true: String koji ce stojati pre -Data.db/-Index.db/... u imenima fajlova
-// Ako je is_multiple_files false: Celo ime SST fajla
+// Parametar base name: String koji ce stojati pre -Data.db/-Index.db/... u imenima fajlova
 func (writer *SSTFileWriter) Open(base_name string) {
 	if writer.is_multiple_files {
 		// Pisanje sstabele kao vise fajlova
@@ -104,6 +102,19 @@ func (writer *SSTFileWriter) Open(base_name string) {
 
 	} else {
 		// Pisanje sstabele kao jedan fajl
+		file_open_fail := false
+		sstFile, err := os.OpenFile(base_name+"-Data.db", os.O_RDWR|os.O_CREATE, 0666)
+		if err != nil {
+			file_open_fail = true
+		}
+
+		if file_open_fail {
+			writer.Ok = false
+			sstFile.Close()
+			return
+		} else {
+			writer.sstFile = sstFile
+		}
 	}
 }
 
@@ -239,7 +250,7 @@ func (writer *SSTFileWriter) Finish() {
 		// Zapsivanje TOC-a
 		toc_contents := writer.sstFile.Name() + "\n" + writer.indexFile.Name() +
 			"\n" + writer.summaryFile.Name() + "\n" + writer.filterFile.Name() + "\n" +
-			writer.metadataFile.Name() + writer.tocFile.Name()
+			writer.metadataFile.Name() + "\n" + writer.tocFile.Name()
 
 		_, err = writer.tocFile.Write([]byte(toc_contents))
 		if err != nil {
