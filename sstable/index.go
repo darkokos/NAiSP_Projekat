@@ -46,3 +46,11 @@ func readIndexEntry(indexFile *os.File) (*IndexEntry, bool) {
 
 	return &indexEntry, true
 }
+
+// Format zapisa u indeksu je duzina kljuca (8B) - offset (8B) - kljuc(?B)
+func writeIndexEntry(indexFile *os.File, key string, offset uint64) {
+
+	binary.Write(indexFile, binary.LittleEndian, uint64(len(key)))
+	binary.Write(indexFile, binary.LittleEndian, offset)
+	binary.Write(indexFile, binary.LittleEndian, []byte(key))
+}

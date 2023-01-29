@@ -14,7 +14,7 @@ import (
 const (
 	SSTABLE_MAGIC_NUMBER_SIZE         = 8
 	SSTABLE_MULTI_FILE_MAGIC_NUMBER   = uint64(0x473700DD14E7F08B) // Magicni broj za sstabelu u rezimu gde je jedna SSTabele sacinjena iz vise fajlova
-	SSTABALE_SINGLE_FILE_MAGIC_NUMBER = uint64(0xE14695378B12D2F8) // Magicni za sstabelu u rezimu gde je su svi elementi SSTabele u jednom fajlu
+	SSTABALE_SINGLE_FILE_MAGIC_NUMBER = uint64(0xE14695378B12D2F8) // Magicni broj za sstabelu u rezimu gde je su svi elementi SSTabele u jednom fajlu
 )
 
 // Funkcija zapisuje niz MemTableEntry-a u SSTable sa imenom filename.
@@ -179,12 +179,4 @@ func writeSSTableEntry(sstableFile *os.File, entry *memtable.MemTableEntry) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-// Format zapisa u indeksu je duzina kljuca (8B) - offset (8B) - kljuc(?B)
-func writeIndexEntry(indexFile *os.File, key string, offset uint64) {
-
-	binary.Write(indexFile, binary.LittleEndian, uint64(len(key)))
-	binary.Write(indexFile, binary.LittleEndian, offset)
-	binary.Write(indexFile, binary.LittleEndian, []byte(key))
 }
