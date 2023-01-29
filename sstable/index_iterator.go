@@ -1,0 +1,99 @@
+package sstable
+
+import (
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/darkokos/NAiSP_Projekat/utils"
+)
+
+type IndexIterator struct {
+	indexFile  *os.File
+	end_offset int64
+	Valid      bool
+	Ok         bool
+}
+
+// Pravi IndexIterator koji iterira kroz indeks koji je realizovan kao zaseban fajl
+// Ako je doslo do greske u otvaranju fajla vraca nil
+func getIndexIteratorFromIndexFile(filename string) *IndexIterator {
+	indexFile, err := os.Open(filename)
+	if err != nil {
+		return nil
+	}
+
+	size := utils.GetFileSize(filename)
+
+	if size == -1 {
+		return nil
+	}
+
+	iter := IndexIterator{indexFile: indexFile, end_offset: size, Valid: true, Ok: true}
+
+	return &iter
+}
+
+//Pravi IndexIterator koji iterira kroz indeks koji je u okviru SSTabele
+func getIndexIteratorFromSSTableFile(filename string) *IndexIterator {
+	//TODO: Pravljenje indeks iteratora za sstabelu koja je jedan fajl
+	return nil
+}
+
+func (iter *IndexIterator) Next() *IndexEntry {
+	cur_pos, _ := iter.indexFile.Seek(0, io.SeekCurrent)
+
+	if !iter.Valid {
+		return nil
+	}
+
+	if cur_pos >= iter.end_offset {
+		iter.Valid = false
+		iter.Ok = true
+		iter.indexFile.Close()
+		return nil
+	}
+
+	entry, ok := readIndexEntry(iter.indexFile)
+
+	iter.Valid = (entry != nil)
+	iter.Ok = ok
+
+	if !iter.Valid {
+		iter.indexFile.Close()
+	}
+
+	return entry
+}
+
+// Funkcija skace za offset bajtova u napred u fajlu koji se cita
+// Ako dodje do greske invalidira iterator i postavlja Ok na false i zatvara fajl
+func (iter *IndexIterator) SeekToOffset(offset int64) {
+	_, err := iter.indexFile.Seek(offset, io.SeekCurrent)
+	if err != nil {
+		fmt.Println("Greska pri citanju indeksa: ", err)
+		iter.Valid = false
+		iter.Ok = false
+		iter.indexFile.Close()
+	}
+
+}
+
+// Postavlja end_offest
+func (iter *IndexIterator) SetEndOffset(end_offset int64) {
+	iter.end_offset = end_offset
+}
+
+// Trazi zapis u indeksu koji se poklapa sa datim kljucem i potom zatvara fajl i invalidira iterator
+// Ako ga nadje u opsegu nad kojim je iterator zadat (pre end_offset) vraca IndexEntry sa tim zapisom
+// Ako ga ne nadje vraca nil
+func (iter *IndexIterator) SeekAndClose(key_string string) *IndexEntry {
+
+	for currentIndexEntry := iter.Next(); iter.Valid; currentIndexEntry = iter.Next() {
+		if currentIndexEntry.Key == key_string {
+			return currentIndexEntry
+		}
+	}
+
+	return nil
+}

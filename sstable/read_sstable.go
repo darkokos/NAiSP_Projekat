@@ -103,7 +103,7 @@ func ReadOneSSTEntry(sstableFile *os.File) (entry *SSTableEntry, ok bool) {
 
 //TODO: Wrapper oko ovoga za imena fajlova
 
-func readOneSSTEntryWithKey(key []byte, filterFile *os.File, summaryFile *os.File, indexFile *os.File, sstFile *os.File) (entry *SSTableEntry) {
+func readOneSSTEntryWithKeyMultipleFiles(key []byte, filterFile *os.File, summaryFile *os.File, indexFile *os.File, sstFile *os.File) (entry *SSTableEntry) {
 	key_string := string(key)
 	filter := readFilter(filterFile)
 
@@ -179,7 +179,7 @@ func ReadOneSSTEntryWithKey(key []byte, sstFileName string, indexFilename string
 			return nil
 		}
 
-		return readOneSSTEntryWithKey(key, filterFile, summaryFile, indexFile, sstFile)
+		return readOneSSTEntryWithKeyMultipleFiles(key, filterFile, summaryFile, indexFile, sstFile)
 	} else {
 		//TODO: Citanje iz sstable-a koji je jedan fajl
 	}

@@ -2,6 +2,7 @@ package sstable
 
 import (
 	"encoding/binary"
+	"io"
 	"os"
 
 	wal "github.com/darkokos/NAiSP_Projekat/WAL"
@@ -54,25 +55,28 @@ func writeSummaryEntry(f *os.File, first *memtable.MemTableEntry, last *memtable
 	binary.Write(f, binary.LittleEndian, offset_bytes)
 }
 
-func readSummaryEntry(summary_file *os.File) *SummaryEntry {
+func readSummaryEntry(summary_file *os.File) (*SummaryEntry, bool) {
 
 	size_bytes := make([]byte, 8)
 
 	err := binary.Read(summary_file, binary.LittleEndian, size_bytes)
 	if err != nil {
-		return nil
+		if err == io.EOF {
+			return nil, true
+		}
+		return nil, false
 	}
 
 	first_key_size := binary.LittleEndian.Uint64(size_bytes)
 
 	err = binary.Read(summary_file, binary.LittleEndian, size_bytes)
 	if err != nil {
-		return nil
+		return nil, false
 	}
 
 	last_key_size := binary.LittleEndian.Uint64(size_bytes)
 
-	//TODO: Ozbediti se od lose ucitanih velicina
+	//TODO: Ozbediti se od lose ucitanih (ovo se moze uraditi proverom u odnosu na velicinu fajla)
 	first_key := make([]byte, first_key_size)
 	last_key := make([]byte, last_key_size)
 	binary.Read(summary_file, binary.LittleEndian, first_key)
@@ -83,7 +87,7 @@ func readSummaryEntry(summary_file *os.File) *SummaryEntry {
 
 	summaryEntry := SummaryEntry{FirstKey: string(first_key), LastKey: string(last_key), Offset: int64(offset)}
 
-	return &summaryEntry
+	return &summaryEntry, true
 }
 
 // Vraca summary zapis u ciji opseg upada key ili nil ako takvog zapisa nema ili dodje do greske
@@ -107,7 +111,7 @@ func findSummaryEntry(summary_file *os.File, key []byte) *SummaryEntry {
 
 	last_key_size := binary.LittleEndian.Uint64(size_bytes)
 
-	//TODO: Ozbediti se od lose ucitanih velicina
+	//TODO: Ozbediti se od lose ucitanih (ovo se moze uraditi proverom u odnosu na velicinu fajla)
 	first_key := make([]byte, first_key_size)
 	last_key := make([]byte, last_key_size)
 	binary.Read(summary_file, binary.LittleEndian, first_key)
@@ -117,7 +121,7 @@ func findSummaryEntry(summary_file *os.File, key []byte) *SummaryEntry {
 		return nil
 	}
 
-	currentSummaryEntry := readSummaryEntry(summary_file)
+	currentSummaryEntry, _ := readSummaryEntry(summary_file)
 
 	for currentSummaryEntry != nil {
 		if currentSummaryEntry.FirstKey <= key_string && key_string <= currentSummaryEntry.LastKey {
@@ -128,7 +132,7 @@ func findSummaryEntry(summary_file *os.File, key []byte) *SummaryEntry {
 			break
 		}
 
-		currentSummaryEntry = readSummaryEntry(summary_file)
+		currentSummaryEntry, _ = readSummaryEntry(summary_file)
 	}
 
 	return nil
