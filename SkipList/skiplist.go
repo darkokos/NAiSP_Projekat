@@ -9,7 +9,7 @@ import (
 type SkipList struct {
 	maxHeight int
 	height    int
-	size      int
+	Size      int
 	head      *SkipListNode
 }
 
