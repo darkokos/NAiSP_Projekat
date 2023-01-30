@@ -1,7 +1,6 @@
 package sstable
 
 import (
-	"encoding/binary"
 	"io"
 	"os"
 
@@ -86,6 +85,7 @@ func (iter *SSTableIterator) Close() {
 }
 
 func GetSSTableIterator(filename string) *SSTableIterator {
+	//TODO: Osigurati da se zatvara fajl nakon return nil
 	sstFile, err := os.Open(filename)
 	if err != nil {
 		return nil
@@ -110,15 +110,8 @@ func GetSSTableIterator(filename string) *SSTableIterator {
 		return &iter
 
 	} else if magic_number == SSTABALE_SINGLE_FILE_MAGIC_NUMBER {
-		//TODO: Konstrukcija iteratora za sstabelu koja je jedan fajl
-		footer := &SSTFooter{}
-		_, err := sstFile.Seek((SST_FOOTER_SIZE+SSTABLE_MAGIC_NUMBER_SIZE)*-1, io.SeekEnd)
-		if err != nil {
-			return nil
-		}
-
-		err = binary.Read(sstFile, binary.LittleEndian, footer)
-		if err != nil {
+		footer := ReadSSTFooter(sstFile)
+		if footer == nil {
 			return nil
 		}
 
