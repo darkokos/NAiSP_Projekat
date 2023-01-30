@@ -37,10 +37,23 @@ const (
 // ...
 // [data block n]
 // [magic number]
-//TODO: Pravljenje dodatnih delova izdvojiti
-func writeSSTableMultipleFiles(filename_prefix string, sortedEntries []*memtable.MemTableEntry) {
+//TODO: Sledece dve funkcije bi trebalo da budu jedna koja ce citati iz konfiguracije kako da pise
+func WriteSSTableMultipleFiles(filename_prefix string, sortedEntries []*memtable.MemTableEntry) {
 
 	sstWriter := GetSSTFileWriter(true)
+	sstWriter.Open(filename_prefix)
+
+	for _, entry := range sortedEntries {
+		sstEntry := CreateSSTableEntryFromMemTableEntry(entry)
+		sstWriter.Put(sstEntry)
+	}
+
+	sstWriter.Finish()
+}
+
+func WriteSSTableOneFile(filename_prefix string, sortedEntries []*memtable.MemTableEntry) {
+
+	sstWriter := GetSSTFileWriter(false)
 	sstWriter.Open(filename_prefix)
 
 	for _, entry := range sortedEntries {
