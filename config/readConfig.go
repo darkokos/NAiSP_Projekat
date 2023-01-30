@@ -7,7 +7,7 @@ import (
 )
 
 var config Config = Config{
-	WalSize:             10,
+	WalSize:             10000000,
 	MemtableSize:        4,
 	MemtableStructure:   "skip_list",
 	LSMTreeLevels:       4,
@@ -18,7 +18,7 @@ var config Config = Config{
 }
 
 type Config struct {
-	WalSize             uint64 `yaml:"wal_size"`               // Velicina WAL segmenta
+	WalSize             uint64 `yaml:"wal_size"`               // Velicina WAL segmenta u bajtovima
 	MemtableSize        uint64 `yaml:"memtable_size"`          // Max broj zapisa u MemTable (kad dodje do tog broja flush-uje se)
 	MemtableStructure   string `yaml:"memtable_structure"`     // Koja struktura se koristi za memtable ("hashmap", "skip_list", "btree")
 	LSMTreeLevels       uint64 `yaml:"lsm_tree_levels"`        // Maksimalan broj nivoa LSM stabla
