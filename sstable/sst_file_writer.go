@@ -194,9 +194,6 @@ func (writer *SSTFileWriter) Finish() {
 
 	filter := bloomfilter.CreateBloomFilterBasedOnParams(writer.records_written, FALSE_POSITIVE_RATE)
 
-	serialized_filter := filter.Serialize()
-	serialized_length := uint64(len(serialized_filter))
-
 	metadata := merkleTree.CreateMerkleTree(writer.valuesWritten)
 	metadataBytes := merkleTree.SerializeTree(metadata)
 
@@ -204,6 +201,9 @@ func (writer *SSTFileWriter) Finish() {
 		for entry := sstIter.Next(); sstIter.Valid; entry = sstIter.Next() {
 			filter.Add(entry.Key)
 		}
+
+		serialized_filter := filter.Serialize()
+		serialized_length := uint64(len(serialized_filter))
 
 		if writer.records_written%summary_density != 0 {
 			writeSummaryEntry(writer.summaryFile, writer.next_summary_key, writer.last_key_written, writer.next_summary_offset)
@@ -314,6 +314,9 @@ func (writer *SSTFileWriter) Finish() {
 				}
 			}
 		}
+
+		serialized_filter := filter.Serialize()
+		serialized_length := uint64(len(serialized_filter))
 
 		if records_ingested%summary_density != 0 {
 			summary_keys = append(summary_keys, writer.last_key_written)
