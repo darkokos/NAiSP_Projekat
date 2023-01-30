@@ -35,7 +35,6 @@ func (t *BTree) Search(key []byte) (int, *BTreeNode){
 	return (*(*t).root).SearchNode(key)
 }
 func (n *BTreeNode) SearchNode(key []byte) (int, *BTreeNode){
-	fmt.Print(*n, "\n")
 	for i, k := range (*n).keys{
 		if (string(key) == string(k.key)){
 			return 0, n
