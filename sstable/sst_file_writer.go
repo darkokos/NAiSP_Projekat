@@ -404,10 +404,10 @@ func (writer *SSTFileWriter) Finish() {
 		}
 
 		footer := SSTFooter{
-			indexOffset:    indexOffset,
-			summaryOffset:  summaryOffset,
-			filterOffset:   filterOffset,
-			metadataOffset: metadataOffset,
+			IndexOffset:    indexOffset,
+			SummaryOffset:  summaryOffset,
+			FilterOffset:   filterOffset,
+			MetadataOffset: metadataOffset,
 		}
 
 		err = binary.Write(writer.sstFile, binary.LittleEndian, footer)
