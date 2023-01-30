@@ -2,6 +2,11 @@ package BTree
 
 import "fmt"
 
+type KvPair struct {
+	key       []byte
+	val       []byte
+	tombstone bool
+}
 type BTreeNode struct {
 	parent     *BTreeNode
 	children   []*BTreeNode
