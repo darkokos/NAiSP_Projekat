@@ -19,7 +19,7 @@ func TestSSTable(t *testing.T) {
 	sorted_entries = append(sorted_entries, memtable.CreateEntry([]byte("Momir"), []byte{39, 21, 1, 2, 3}))
 	sorted_entries = append(sorted_entries, memtable.CreateEntry([]byte("Vuk"), []byte{52, 21}))
 
-	writeSSTableMultipleFiles("test_table", sorted_entries)
+	WriteSSTableMultipleFiles("test_table", sorted_entries)
 }
 
 func TestReadWholeSSTable(t *testing.T) {

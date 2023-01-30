@@ -119,31 +119,33 @@ func (writer *SSTFileWriter) Open(base_name string) {
 }
 
 func (writer *SSTFileWriter) Put(entry *SSTableEntry) {
-	//TODO: Ne znamo sta je pocetak a sta kraj summary-a. Header ce morati da postane footer.
 	summary_density := 3
+
+	key := entry.Key
+	//value := entry.Value
+	offset, err := writer.sstFile.Seek(0, io.SeekCurrent)
+	if err != nil {
+		// handle error
+		panic(err)
+	}
+
+	//TODO: Proveri da li je doslo do greske pri pisanju reda SSTabele
+	writeSSTableEntry(writer.sstFile, entry)
+
+	if writer.records_written == 0 {
+		writer.first_key_written = entry.Key
+	}
+
+	writer.valuesWritten = append(writer.valuesWritten, entry.Value)
+	writer.last_key_written = entry.Key
+
 	if writer.is_multiple_files {
 		if writer.records_written%summary_density == 0 {
 			writer.next_summary_key = entry.Key
 		}
 
-		key := entry.Key
-		//value := entry.Value
-		offset, err := writer.sstFile.Seek(0, io.SeekCurrent)
-		if err != nil {
-			// handle error
-			panic(err)
-		}
-
 		writeIndexEntry(writer.indexFile, string(key), uint64(offset))
 		//fmt.Println("Kljuc: ", key, "Vrednost: ", value)
-		writeSSTableEntry(writer.sstFile, entry)
-
-		writer.valuesWritten = append(writer.valuesWritten, entry.Value)
-		writer.last_key_written = entry.Key
-
-		if writer.records_written == 0 {
-			writer.first_key_written = entry.Key
-		}
 
 		writer.records_written++
 		if writer.records_written%summary_density == 0 {
@@ -155,7 +157,7 @@ func (writer *SSTFileWriter) Put(entry *SSTableEntry) {
 			}
 		}
 	} else {
-
+		writer.records_written++
 	}
 }
 
@@ -173,13 +175,24 @@ func (writer *SSTFileWriter) CloseFiles() {
 func (writer *SSTFileWriter) Finish() {
 	summary_density := 3 //TODO: I ovde zameniti summary_density
 
-	sstIter := GetSSTableIterator(writer.sstFile.Name())
+	endOfData, err := writer.sstFile.Seek(0, io.SeekCurrent)
+	if err != nil {
+		writer.Ok = false
+		writer.CloseFiles()
+		return
+	}
+
+	//Vracamo se na pocetak SSTabele
+	sstFileReadOnly, err := os.Open(writer.sstFile.Name())
+	if err != nil {
+		writer.Ok = false
+		writer.CloseFiles()
+		return
+	}
+
+	sstIter := SSTableIterator{sstFile: sstFileReadOnly, end_offset: endOfData, Valid: true, Ok: true}
 
 	filter := bloomfilter.CreateBloomFilterBasedOnParams(writer.records_written, FALSE_POSITIVE_RATE)
-
-	for entry := sstIter.Next(); sstIter.Valid; entry = sstIter.Next() {
-		filter.Add(entry.Key)
-	}
 
 	serialized_filter := filter.Serialize()
 	serialized_length := uint64(len(serialized_filter))
@@ -188,6 +201,10 @@ func (writer *SSTFileWriter) Finish() {
 	metadataBytes := merkleTree.SerializeTree(metadata)
 
 	if writer.is_multiple_files {
+		for entry := sstIter.Next(); sstIter.Valid; entry = sstIter.Next() {
+			filter.Add(entry.Key)
+		}
+
 		if writer.records_written%summary_density != 0 {
 			writeSummaryEntry(writer.summaryFile, writer.next_summary_key, writer.last_key_written, writer.next_summary_offset)
 		}
@@ -215,12 +232,6 @@ func (writer *SSTFileWriter) Finish() {
 			writer.CloseFiles()
 			return
 		}
-
-		// I sta cemo sad
-		// Imamo records written
-		// Imamo sstable
-		// I iterator :)
-		// U oba slucaja smo pisali samo u sstable
 
 		// Zapisivanje duzine bloom filtera
 		err = binary.Write(writer.filterFile, binary.LittleEndian, serialized_length)
@@ -264,6 +275,165 @@ func (writer *SSTFileWriter) Finish() {
 		if err != nil {
 			panic(err)
 		}
+	} else {
+		summary_keys := make([][]byte, 0, writer.records_written)
+		index_offsets := make([]int64, 0, writer.records_written)
+		records_ingested := 0
+
+		currentIndexOffset := endOfData
+
+		indexOffset := currentIndexOffset
+
+		// Kreiranje bloom filtera i pisanje indeksa
+		for entry := sstIter.Next(); sstIter.Valid; entry = sstIter.Next() {
+			if records_ingested%summary_density == 0 {
+				summary_keys = append(summary_keys, entry.Key)
+			}
+
+			filter.Add(entry.Key)
+
+			currentOffset, err := writer.sstFile.Seek(0, io.SeekCurrent)
+			if err != nil {
+				writer.Ok = false
+				writer.CloseFiles()
+				return
+			}
+
+			writeIndexEntry(writer.sstFile, string(entry.Key), uint64(currentOffset))
+
+			records_ingested++
+
+			if records_ingested%summary_density == 0 {
+				summary_keys = append(summary_keys, entry.Key)
+				index_offsets = append(index_offsets, currentIndexOffset)
+				currentIndexOffset, err = writer.sstFile.Seek(0, io.SeekCurrent)
+				if err != nil {
+					writer.Ok = false
+					writer.CloseFiles()
+					return
+				}
+			}
+		}
+
+		if records_ingested%summary_density != 0 {
+			summary_keys = append(summary_keys, writer.last_key_written)
+			index_offsets = append(index_offsets, currentIndexOffset)
+		}
+
+		summaryOffset, err := writer.sstFile.Seek(0, io.SeekCurrent)
+		if err != nil {
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		// Pisemo bajtove koji ce predstavljati pokazivac ka footer-u summary-a
+		err = binary.Write(writer.sstFile, binary.LittleEndian, []byte{0, 0, 0, 0, 0, 0, 0, 0})
+		if err != nil {
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		//Zapsivanje summary-a
+		for i := 0; i < len(index_offsets); i++ {
+			writeSummaryEntry(writer.sstFile, summary_keys[2*i], summary_keys[2*i+1], index_offsets[i])
+		}
+
+		summaryFooterOffset, err := writer.sstFile.Seek(0, io.SeekCurrent)
+		if err != nil {
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		_, err = writer.sstFile.Seek(summaryOffset, io.SeekStart)
+		if err != nil {
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		binary.Write(writer.sstFile, binary.LittleEndian, summaryFooterOffset)
+
+		_, err = writer.sstFile.Seek(summaryFooterOffset, io.SeekStart)
+		if err != nil {
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		writeSummaryHeader(writer.sstFile, writer.first_key_written, writer.last_key_written)
+
+		filterOffset, err := writer.sstFile.Seek(0, io.SeekCurrent)
+		if err != nil {
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		// Zapisivanje duzine bloom filtera
+		err = binary.Write(writer.sstFile, binary.LittleEndian, serialized_length)
+		if err != nil {
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		// Zapisivanje bloom filtera
+		binary.Write(writer.sstFile, binary.LittleEndian, serialized_filter)
+		if err != nil {
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		metadataOffset, err := writer.sstFile.Seek(0, io.SeekCurrent)
+		if err != nil {
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		err = binary.Write(writer.sstFile, binary.LittleEndian, metadataBytes)
+		if err != nil {
+			fmt.Println("Greska u zapsivanju merkle stabla")
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		footer := SSTFooter{
+			indexOffset:    indexOffset,
+			summaryOffset:  summaryOffset,
+			filterOffset:   filterOffset,
+			metadataOffset: metadataOffset,
+		}
+
+		err = binary.Write(writer.sstFile, binary.LittleEndian, footer)
+		if err != nil {
+			fmt.Println("Greska u zapsivanju footer-a")
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		// Magicni broj
+		err = binary.Write(writer.sstFile, binary.LittleEndian, SSTABALE_SINGLE_FILE_MAGIC_NUMBER)
+		if err != nil {
+			writer.Ok = false
+			writer.CloseFiles()
+			return
+		}
+
+		//Zapisi indeks
+
+		// Mozemo cuvati kljuceve koji idu u summary, nece ih biti puno
+		// Zapisi summary
+		// Zapisi bloom filter
+		// Zapisis merkle stablo
+
+		// Prati gde su offseti svih ovih stvari: kraj Data/pocetak Index, kraj Index/pocetak Summary, kraj Summary/pocetak Filter, kraj Filter/pocetak Metadata
 
 	}
 	writer.CloseFiles()
