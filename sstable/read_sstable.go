@@ -121,6 +121,11 @@ func ReadOneSSTEntryWithKey(key []byte, sstFileName string, indexFilename string
 		//TODO: Pretraga jednog fajla
 		//Iscitaj gde se sta nalazi i postavi offsete
 		//fmt.Println("Nije implementirano")
+
+		summaryIterator = getSummaryIteratorFromSSTableFile(sstFileName)
+		indexIterator = getIndexIteratorFromSSTableFile(sstFileName)
+		sstableIterator = GetSSTableIterator(sstFileName)
+		filter = ReadFilterFromSSTFile(sstFileName)
 	}
 
 	if summaryIterator == nil || indexIterator == nil || sstableIterator == nil || filter == nil {

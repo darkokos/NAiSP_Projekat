@@ -54,7 +54,7 @@ func (iter *SSTableIterator) Next() *SSTableEntry {
 }
 
 func (iter *SSTableIterator) SeekToOffset(offset int64) {
-	_, err := iter.sstFile.Seek(offset, io.SeekCurrent)
+	_, err := iter.sstFile.Seek(offset, io.SeekStart)
 	if err != nil {
 		iter.Valid = false
 		iter.Ok = false
@@ -82,6 +82,17 @@ func (iter *SSTableIterator) SeekAndClose(key []byte) *SSTableEntry {
 func (iter *SSTableIterator) Close() {
 	iter.sstFile.Close()
 	iter.Valid = false
+}
+
+func (iter *SSTableIterator) Tell() int64 {
+	offset, err := iter.sstFile.Seek(0, io.SeekCurrent)
+	if err != nil {
+		iter.Close()
+		return -1
+	}
+
+	return offset
+
 }
 
 func GetSSTableIterator(filename string) *SSTableIterator {

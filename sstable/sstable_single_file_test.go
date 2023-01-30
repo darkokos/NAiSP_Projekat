@@ -89,3 +89,43 @@ func TestSSTableIteratorMalfomedAndEmpty(t *testing.T) {
 		t.Fatalf("Ne bi trebalo da se dobije iterator od loseg sst fajla")
 	}
 }
+
+func TestReadSSTableByKeySingleFile(t *testing.T) {
+
+	entry := ReadOneSSTEntryWithKey([]byte("Gojko"), "test_table_fused-Data.db", "", "", "")
+
+	if entry == nil {
+		t.Fatalf("Trebalo je da nadje entry")
+	} else {
+		if string(entry.Key) != "Gojko" {
+			t.Fatalf("Kljuc se ne poklapa")
+		}
+	}
+
+	entry = ReadOneSSTEntryWithKey([]byte("Vuk"), "test_table_fused-Data.db", "", "", "")
+
+	if entry == nil {
+		t.Fatalf("Trebalo je da nadje entry")
+	} else {
+		if string(entry.Key) != "Vuk" {
+			t.Fatalf("Kljuc se ne poklapa")
+		}
+	}
+
+	entry = ReadOneSSTEntryWithKey([]byte("Darko"), "test_table_fused-Data.db", "", "", "")
+
+	if entry == nil {
+		t.Fatalf("Trebalo je da nadje entry")
+	} else {
+		if string(entry.Key) != "Darko" {
+			t.Fatalf("Kljuc se ne poklapa")
+		}
+	}
+
+	entry = ReadOneSSTEntryWithKey([]byte("Momia"), "test_table_fused-Data.db", "", "", "")
+
+	if entry != nil {
+		t.Fatalf("Nije trebalo da nadje ovo")
+	}
+
+}

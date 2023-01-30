@@ -285,19 +285,18 @@ func (writer *SSTFileWriter) Finish() {
 		indexOffset := currentIndexOffset
 
 		// Kreiranje bloom filtera i pisanje indeksa
+		currentOffset := sstIter.Tell()
+		if currentOffset == -1 {
+			writer.CloseFiles()
+			writer.Ok = false
+			return
+		}
 		for entry := sstIter.Next(); sstIter.Valid; entry = sstIter.Next() {
 			if records_ingested%summary_density == 0 {
 				summary_keys = append(summary_keys, entry.Key)
 			}
 
 			filter.Add(entry.Key)
-
-			currentOffset, err := writer.sstFile.Seek(0, io.SeekCurrent)
-			if err != nil {
-				writer.Ok = false
-				writer.CloseFiles()
-				return
-			}
 
 			writeIndexEntry(writer.sstFile, string(entry.Key), uint64(currentOffset))
 
@@ -312,6 +311,13 @@ func (writer *SSTFileWriter) Finish() {
 					writer.CloseFiles()
 					return
 				}
+			}
+
+			currentOffset = sstIter.Tell()
+			if currentOffset == -1 {
+				writer.CloseFiles()
+				writer.Ok = false
+				return
 			}
 		}
 
