@@ -1,0 +1,9 @@
+wal_size: 20000000
+memtable_size: 10
+memtable_structure: btree
+lsm_tree_levels: 4
+sstable_multiple_files: true
+summary_density: 5
+cache_size: 4
+rate_limit: 4
+
