@@ -2,6 +2,7 @@ package sstable
 
 import (
 	"encoding/binary"
+	"io"
 	"os"
 
 	bloomfilter "github.com/darkokos/NAiSP_Projekat/bloom-filter"
@@ -65,19 +66,32 @@ func ReadFilterAsSeparateFile(filename string) *bloomfilter.BloomFilter {
 	return filter
 }
 
-// Cita filter iz zasebnog fajla ili objedinjene sstable sa imenom filename
-// Funkcija proverava da li je fajl objedinjena sstabela ili filter
-// Vraca procitani bloom filter ili nil ako je doslo do greske
-/*func ReadFilterFromFile(filename string) *bloomfilter.BloomFilter {
-
-	filterFile, err := os.Open(filename)
-
+func ReadFilterFromSSTFile(filename string) *bloomfilter.BloomFilter {
+	sstFile, err := os.Open(filename)
 	if err != nil {
+		sstFile.Close()
 		return nil
 	}
 
-	//Problem - sta ako se bloom filter zavrsava sa bas tih 8 bitova
-	//Resenje - ipak 2 moda citanja na osnovu sstabele
-	magic_number := readMagicNumber(filterFile)
+	footer := ReadSSTFooter(sstFile)
+	if footer == nil {
+		sstFile.Close()
+		return nil
+	}
+
+	startOfBloomFilter := footer.FilterOffset
+
+	_, err = sstFile.Seek(startOfBloomFilter, io.SeekStart)
+	if err != nil {
+		sstFile.Close()
+		return nil
+	}
+
+	filter := readFilter(sstFile)
+	if filter == nil {
+		sstFile.Close()
+		return nil
+	}
+
+	return filter
 }
-*/

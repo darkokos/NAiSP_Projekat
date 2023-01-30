@@ -22,6 +22,44 @@ type SummaryIterator struct {
 	Ok          bool
 }
 
+func getBeginEndKeysAndFooterOffset(summary_file *os.File) (begin_key []byte, end_key []byte, footer_offset int64, ok bool) {
+	bytes_read := make([]byte, 8)
+
+	err := binary.Read(summary_file, binary.LittleEndian, bytes_read)
+	if err != nil {
+		return nil, nil, -1, false
+	}
+
+	footerOffset := int64(binary.LittleEndian.Uint64(bytes_read))
+
+	_, err = summary_file.Seek(footerOffset, io.SeekStart)
+	if err != nil {
+		return nil, nil, -1, false
+	}
+
+	err = binary.Read(summary_file, binary.LittleEndian, bytes_read)
+	if err != nil {
+		return nil, nil, -1, false
+	}
+
+	first_key_size := binary.LittleEndian.Uint64(bytes_read)
+
+	err = binary.Read(summary_file, binary.LittleEndian, bytes_read)
+	if err != nil {
+		return nil, nil, -1, false
+	}
+
+	last_key_size := binary.LittleEndian.Uint64(bytes_read)
+
+	//TODO: Ozbediti se od lose ucitanih (ovo se moze uraditi proverom u odnosu na velicinu fajla)
+	first_key := make([]byte, first_key_size)
+	last_key := make([]byte, last_key_size)
+	binary.Read(summary_file, binary.LittleEndian, first_key)
+	binary.Read(summary_file, binary.LittleEndian, last_key)
+
+	return first_key, last_key, footerOffset, true
+}
+
 func getSummaryIteratorFromFile(filename string) *SummaryIterator {
 	summary_file, err := os.Open(filename)
 
@@ -35,39 +73,11 @@ func getSummaryIteratorFromFile(filename string) *SummaryIterator {
 		return nil
 	}
 
-	bytes_read := make([]byte, 8)
+	first_key, last_key, footerOffset, ok := getBeginEndKeysAndFooterOffset(summary_file)
 
-	err = binary.Read(summary_file, binary.LittleEndian, bytes_read)
-	if err != nil {
+	if !ok {
 		return nil
 	}
-
-	footerOffset := int64(binary.LittleEndian.Uint64(bytes_read))
-
-	_, err = summary_file.Seek(footerOffset, io.SeekStart)
-	if err != nil {
-		return nil
-	}
-
-	err = binary.Read(summary_file, binary.LittleEndian, bytes_read)
-	if err != nil {
-		return nil
-	}
-
-	first_key_size := binary.LittleEndian.Uint64(bytes_read)
-
-	err = binary.Read(summary_file, binary.LittleEndian, bytes_read)
-	if err != nil {
-		return nil
-	}
-
-	last_key_size := binary.LittleEndian.Uint64(bytes_read)
-
-	//TODO: Ozbediti se od lose ucitanih (ovo se moze uraditi proverom u odnosu na velicinu fajla)
-	first_key := make([]byte, first_key_size)
-	last_key := make([]byte, last_key_size)
-	binary.Read(summary_file, binary.LittleEndian, first_key)
-	binary.Read(summary_file, binary.LittleEndian, last_key)
 
 	// Vracamo se na poziciju prvog elementa summary-a
 	_, err = summary_file.Seek(8, io.SeekStart) // TODO: Eliminisati ovaj magicni broj
@@ -82,7 +92,41 @@ func getSummaryIteratorFromFile(filename string) *SummaryIterator {
 
 func getSummaryIteratorFromSSTableFile(filename string) *SummaryIterator {
 	//TODO: Summary iterator iz sst fajla
-	return nil
+
+	sstFile, err := os.Open(filename)
+	if err != nil {
+		sstFile.Close()
+		return nil
+	}
+
+	footer := ReadSSTFooter(sstFile)
+	if footer == nil {
+		sstFile.Close()
+		return nil
+	}
+
+	startOfSummary := footer.SummaryOffset
+	_, err = sstFile.Seek(startOfSummary, io.SeekStart)
+	if err != nil {
+		sstFile.Close()
+		return nil
+	}
+
+	first_key, last_key, footerOffset, ok := getBeginEndKeysAndFooterOffset(sstFile)
+	if !ok {
+		return nil
+	}
+
+	endOfSummary := footerOffset
+
+	_, err = sstFile.Seek(startOfSummary+8, io.SeekStart)
+	if err != nil {
+		sstFile.Close()
+		return nil
+	}
+
+	iter := &SummaryIterator{summaryFile: sstFile, end_offset: endOfSummary, begin_key: string(first_key), end_key: string(last_key), Valid: true, Ok: true}
+	return iter
 }
 
 // Dobavlja sledeci summary zapis

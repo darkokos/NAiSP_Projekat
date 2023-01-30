@@ -37,7 +37,29 @@ func getIndexIteratorFromIndexFile(filename string) *IndexIterator {
 //Pravi IndexIterator koji iterira kroz indeks koji je u okviru SSTabele
 func getIndexIteratorFromSSTableFile(filename string) *IndexIterator {
 	//TODO: Pravljenje indeks iteratora za sstabelu koja je jedan fajl
-	return nil
+	sstFile, err := os.Open(filename)
+	if err != nil {
+		sstFile.Close()
+		return nil
+	}
+
+	footer := ReadSSTFooter(sstFile)
+	if footer == nil {
+		sstFile.Close()
+		return nil
+	}
+
+	startOfIndex := footer.IndexOffset
+	endOfIndex := footer.SummaryOffset
+
+	_, err = sstFile.Seek(startOfIndex, io.SeekStart)
+	if err != nil {
+		sstFile.Close()
+		return nil
+	}
+
+	iter := &IndexIterator{indexFile: sstFile, end_offset: endOfIndex, Valid: true, Ok: true}
+	return iter
 }
 
 func (iter *IndexIterator) Next() *IndexEntry {
@@ -69,7 +91,7 @@ func (iter *IndexIterator) Next() *IndexEntry {
 // Funkcija skace za offset bajtova u napred u fajlu koji se cita
 // Ako dodje do greske invalidira iterator i postavlja Ok na false i zatvara fajl
 func (iter *IndexIterator) SeekToOffset(offset int64) {
-	_, err := iter.indexFile.Seek(offset, io.SeekCurrent)
+	_, err := iter.indexFile.Seek(offset, io.SeekStart)
 	if err != nil {
 		fmt.Println("Greska pri citanju indeksa: ", err)
 		iter.Valid = false
