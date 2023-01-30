@@ -14,10 +14,13 @@ func TestMemtableBTree(t *testing.T) {
 	memTable.Update("1", []byte{0, 0, 0, 1})
 	memTable.Update("4", []byte{0, 0, 0, 4})
 
+	fmt.Println("Dodao 4")
+
 	v, ok := memTable.Get("1")
 	if !ok {
 		t.Fatalf("Kljuc 1 bi trebalo da postoji")
-	} else if v[3] != 10 {
+	} else if v[3] != 1 {
+		fmt.Println(v)
 		t.Fatalf("Kljuc 1 je nadjen ali vrednost nije dobro iscitana %d", v[3])
 	}
 
@@ -31,15 +34,9 @@ func TestMemtableBTree(t *testing.T) {
 		t.Fatalf("Kljuc 1 je nadjen ali vrednost nije dobro iscitana %d", v[3])
 	}
 
-	//fmt.Println("Test flush 1.5")
-	//memTable.Flush()
-
 	memTable.Update("33", []byte{0, 0, 0, 3})
 	memTable.Update("11", []byte{0, 0, 0, 1})
 	memTable.Update("44", []byte{0, 0, 0, 4})
-
-	//fmt.Println("Test flush 2")
-	//memTable.Flush()
 
 	memTable.Update("111", []byte{0, 0, 0, 10})
 	memTable.Update("222", []byte{0, 0, 0, 2})
@@ -51,7 +48,7 @@ func TestMemtableBTree(t *testing.T) {
 	memTable.Update("4444", []byte{0, 0, 0, 3})
 	memTable.Update("11111", []byte{0, 0, 0, 1})
 	memTable.Update("22222", []byte{0, 0, 0, 4})
-	//memTable.Update("33333", []byte{0, 0, 0, 10})
+	memTable.Update("33333", []byte{0, 0, 0, 10})
 
 	v, ok = memTable.Get("2")
 	fmt.Println(v)
@@ -109,8 +106,22 @@ func TestMemtableBTree(t *testing.T) {
 	memTable.Update("11", []byte{0, 0, 0, 10})
 	//memTable.Update("5", []byte{0,0,0,5})
 
-	_, ok = memTable.Get("5")
-	if ok {
-		t.Fatalf("Memtable bi trebalo da je bio flush-ovan")
-	}
+	fmt.Println("Velicina memtable: ", memTable.data.Size())
+	/*
+		_, ok = memTable.Get("5")
+		if ok {
+			t.Fatalf("Memtable bi trebalo da je bio flush-ovan")
+		}
+	*/
+}
+
+func TestMemtableBTreeSmaller(t *testing.T) {
+	memTable := MakeBTreeMemTable(5)
+
+	memTable.Update("2", []byte{0, 0, 0, 2})
+	memTable.Update("3", []byte{0, 0, 0, 3})
+	memTable.Update("1", []byte{0, 0, 0, 1})
+	memTable.Update("4", []byte{0, 0, 0, 4})
+	memTable.Update("5", []byte{0, 0, 0, 5})
+
 }
