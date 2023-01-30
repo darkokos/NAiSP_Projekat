@@ -20,6 +20,11 @@ func MakeSkipListMemTable(capacity int) *MemTable {
 	return &memTable
 }
 
+func MakeBTreeMemTable(capacity int) *MemTable {
+	memtable := MemTable{data: MakeBTreeInternal(), capacity: capacity, generation: 0}
+	return &memtable
+}
+
 func (memTable *MemTable) remakeStructure() {
 	memTable.data.Clear()
 }

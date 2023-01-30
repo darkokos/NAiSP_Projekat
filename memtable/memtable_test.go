@@ -1,6 +1,7 @@
 package memtable
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -36,6 +37,7 @@ func TestMemtable(t *testing.T) {
 		t.Fatalf("Memtable bi trebalo da je bio flush-ovan")
 	}
 
+	fmt.Println("Drugi memtable")
 	memTable.Update("5", []byte{0, 0, 0, 2})
 	memTable.Update("36", []byte{0, 0, 0, 3})
 	memTable.Update("231", []byte{0, 0, 0, 1})

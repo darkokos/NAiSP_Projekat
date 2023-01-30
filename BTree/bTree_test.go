@@ -71,3 +71,21 @@ func Test(t *testing.T) {
 	//tr.AddKey([]byte{1, 2})
 	fmt.Print("TESTING")
 }
+
+func TestBasedOnMemtable(t *testing.T) {
+	tr := BTree{}
+	tr.Init(3)
+	tr.AddKey([]byte("2"), []byte{6})
+	tr.AddKey([]byte("3"), []byte{6})
+	tr.AddKey([]byte("4"), []byte{6})
+	tr.AddKey([]byte("1"), []byte{5})
+
+	ok, v := tr.GetValue([]byte("1"))
+
+	if ok == -1 {
+		t.Fatalf("Trebalo je da nadje 1")
+	} else if v[0] != 5 {
+		t.Fatalf("Nesto nije uredu sa vracenom vrednoscu")
+	}
+
+}

@@ -5,16 +5,58 @@ import (
 	"testing"
 )
 
-func TestMemtableSkipList(t *testing.T) {
-	memTable := MakeSkipListMemTable(5)
+func TestMemtableBTree(t *testing.T) {
+	memTable := MakeBTreeMemTable(20)
 
+	//Dodajemo 19 zapisa
 	memTable.Update("2", []byte{0, 0, 0, 2})
 	memTable.Update("3", []byte{0, 0, 0, 3})
 	memTable.Update("1", []byte{0, 0, 0, 1})
 	memTable.Update("4", []byte{0, 0, 0, 4})
-	memTable.Update("1", []byte{0, 0, 0, 10})
 
 	v, ok := memTable.Get("1")
+	if !ok {
+		t.Fatalf("Kljuc 1 bi trebalo da postoji")
+	} else if v[3] != 10 {
+		t.Fatalf("Kljuc 1 je nadjen ali vrednost nije dobro iscitana %d", v[3])
+	}
+
+	memTable.Update("1", []byte{0, 0, 0, 10}) // Menjamo 1
+	memTable.Update("22", []byte{0, 0, 0, 2})
+
+	v, ok = memTable.Get("1")
+	if !ok {
+		t.Fatalf("Kljuc 1 bi trebalo da postoji")
+	} else if v[3] != 10 {
+		t.Fatalf("Kljuc 1 je nadjen ali vrednost nije dobro iscitana %d", v[3])
+	}
+
+	//fmt.Println("Test flush 1.5")
+	//memTable.Flush()
+
+	memTable.Update("33", []byte{0, 0, 0, 3})
+	memTable.Update("11", []byte{0, 0, 0, 1})
+	memTable.Update("44", []byte{0, 0, 0, 4})
+
+	//fmt.Println("Test flush 2")
+	//memTable.Flush()
+
+	memTable.Update("111", []byte{0, 0, 0, 10})
+	memTable.Update("222", []byte{0, 0, 0, 2})
+	memTable.Update("333", []byte{0, 0, 0, 3})
+	memTable.Update("444", []byte{0, 0, 0, 1})
+	memTable.Update("1111", []byte{0, 0, 0, 4})
+	memTable.Update("2222", []byte{0, 0, 0, 10})
+	memTable.Update("3333", []byte{0, 0, 0, 2})
+	memTable.Update("4444", []byte{0, 0, 0, 3})
+	memTable.Update("11111", []byte{0, 0, 0, 1})
+	memTable.Update("22222", []byte{0, 0, 0, 4})
+	//memTable.Update("33333", []byte{0, 0, 0, 10})
+
+	v, ok = memTable.Get("2")
+	fmt.Println(v)
+
+	v, ok = memTable.Get("1")
 	if !ok {
 		t.Fatalf("Kljuc 1 bi trebalo da postoji")
 	} else if v[3] != 10 {
