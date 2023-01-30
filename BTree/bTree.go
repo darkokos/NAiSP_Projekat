@@ -22,8 +22,9 @@ func (t *BTree) Search(key []byte) (int, *BTreeNode) {
 	return (*(*t).root).SearchNode(key)
 }
 func (n *BTreeNode) SearchNode(key []byte) (int, *BTreeNode) {
+	fmt.Print(*n, "\n")
 	for i, k := range (*n).keys {
-		if string(key) == string(k) {
+		if string(key) == string(k.key) {
 			return 0, n
 		} else if string(key) < string(k) {
 			if len((*n).children) == 0 {
@@ -37,7 +38,25 @@ func (n *BTreeNode) SearchNode(key []byte) (int, *BTreeNode) {
 	}
 	return (*(*n).children[len((*n).children)-1]).SearchNode(key)
 }
-func (t *BTree) AddKey(key []byte) int {
+func (t *BTree) ModifyKey(key []byte, value []byte) int {
+	if (*t).root == nil {
+		return -1
+	}
+
+	ok, node := (*t).Search(key)
+
+	if ok == 0 {
+		for i, k := range (*node).keys {
+			if string(k.key) == string(key) && k.tombstone == false {
+				(*node).keys[i].val = value
+			}
+		}
+		return 0
+	}
+	return -1
+}
+func (t *BTree) AddKey(key []byte, value []byte) int {
+	pair := KvPair{key: key, val: value, tombstone: false}
 	if (*t).root == nil {
 		(*t).root = &BTreeNode{
 			keys: [][]byte{key},
@@ -47,19 +66,26 @@ func (t *BTree) AddKey(key []byte) int {
 	fmt.Print("SEARCHING")
 
 	ok, node := (*t).Search(key)
-	var rotationIndex int
 
 	if ok == 0 {
-		return -1 //Kljuc vec postoji, nema dodavanja
+		for i, k := range (*node).keys {
+			if string(k.key) == string(key) && k.tombstone == true {
+				(*node).keys[i].tombstone = false
+				(*node).keys[i].val = value
+			}
+		}
+		return -1 //Kljuc vec postoji, ako nije logicki obrisan, ne radimo nista, ako jeste logicki obrisan treba ga vratiti u opseg, i azurirati vrednost
 	}
-	fmt.Print("INSERTING")
-	over, index := (*node).InsertKey(key)
-	fmt.Print(over, index)
-
+	node.AddKey(pair, t)
+	return 0
+}
+func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
+	over, index := (*node).InsertKey(pair)
+	var rotationIndex int
 	if over == 1 {
 		//Premasili smo stepen stabla, treba uraditi rotaciju
 		for i, child := range (*node).children {
-			if len((*child).keys) < (*t).d {
+			if len((*child).keys) < (*node).d {
 				//nasli smo sibling koji ima prostora, rotacija
 				if i < index {
 					rotationIndex = i
@@ -71,23 +97,59 @@ func (t *BTree) AddKey(key []byte) int {
 				return 0
 			}
 		}
+		//Ne moze rotacija, ide deljenje cvora
+		newParent := BTreeNode{
+			parent: (*node).parent,
+			d:      (*node).d}
+		parent := &newParent
+		if (*node).parent != nil {
+			parent = (*node).parent
+			(*parent).AddKey((*node).keys[int(len((*node).keys)/2)], t)
+		} else {
+			newParent.keys = []KvPair{(*node).keys[int(len((*node).keys)/2)]}
+		}
+		if (*t).root == node {
+			(*t).root = &newParent
+		}
+		leftChild := BTreeNode{
+			parent: parent,
+			d:      (*node).d}
+		rightChild := BTreeNode{
+			parent: parent,
+			d:      (*node).d}
+		leftChild.keys = (*node).keys[:int(len((*node).keys)/2)]
+		rightChild.keys = (*node).keys[int(len((*node).keys)/2)+1:]
+		if len((*node).children) != 0 {
+			leftChild.children = (*node).children[:int(len((*node).children)/2)]
+			rightChild.children = (*node).children[int(len((*node).children)/2)+1:]
+		}
 
+		if string(pair.key) < string(leftChild.keys[len(leftChild.keys)-1].key) {
+			leftChild.AddKey(pair, t)
+			return 0
+		}
+		rightChild.AddKey(pair, t)
+		(*parent).children = []*BTreeNode{&leftChild, &rightChild}
 	}
 	return 0
 }
-
-func (node *BTreeNode) InsertKey(key []byte) (int, int) {
+func (node *BTreeNode) InsertKey(pair KvPair) (int, int) {
 	over := 0
+	emptyNode := &BTreeNode{d: (*node).d}
 	if len((*node).keys) == 0 {
-		(*node).keys = append((*node).keys, key)
+		(*node).keys = append((*node).keys, pair)
+		(*node).children = append((*node).children, emptyNode)
 		return over, 0
 	}
 	if len((*node).keys) == 1 {
-		if string(key) > string((*node).keys[0]) {
-			(*node).keys = append((*node).keys, key)
+		if string(pair.key) > string((*node).keys[0].key) {
+			(*node).keys = append((*node).keys, pair)
+			(*node).children = append((*node).children, emptyNode)
 			return over, 1
 		} else {
-			(*node).keys = append([][]byte{key}, (*node).keys...)
+			(*node).keys = append([]KvPair{pair}, (*node).keys...)
+			(*node).children = append([]*BTreeNode{emptyNode}, (*node).children...)
+
 			return over, 0
 		}
 	}
@@ -103,7 +165,9 @@ func (node *BTreeNode) InsertKey(key []byte) (int, int) {
 		if string((*node).keys[i]) < string(key) && string((*node).keys[i+1]) > string(key) {
 			if len((*node).keys) != (*node).d {
 				(*node).keys = append((*node).keys[:i+1], (*node).keys[i:]...)
-				(*node).keys[i] = key
+				(*node).children = append((*node).children[:i+1], (*node).children[i:]...)
+				(*node).keys[i] = pair
+				(*node).children[i] = emptyNode
 			} else {
 				over = 1
 			}
