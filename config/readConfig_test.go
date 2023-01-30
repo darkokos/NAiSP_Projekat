@@ -6,7 +6,7 @@ func TestReadConfig(t *testing.T) {
 
 	ReadConfig()
 
-	if config.WalSize != 20 {
+	if config.WalSize != 20000000 {
 		t.Fatalf("Pogresno je procitana velicina wal segmenta")
 	}
 

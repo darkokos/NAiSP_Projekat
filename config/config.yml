@@ -1,4 +1,4 @@
-wal_size: 20
+wal_size: 20000000
 memtable_size: 10
 memtable_structure: btree
 lsm_tree_levels: 4
