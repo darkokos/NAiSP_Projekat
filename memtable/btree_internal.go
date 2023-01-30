@@ -59,9 +59,9 @@ func (btreeInternal *BTreeInternal) Update(key string, value []byte) {
 func (btreeInternal *BTreeInternal) GetSortedEntries() []*MemTableEntry {
 	entries := make([]*MemTableEntry, 0, btreeInternal.Size())
 	// Ubacujemo elemente iz mape u niz koji cemo vratiti
-	for _, value := range btreeInternal.data.GetValuesSortedByKey() {
-		entries = append(entries, memTableEntryFromBytes(value))
-	}
+	//for _, value := range btreeInternal.data.GetValuesSortedByKey() {
+	//entries = append(entries, memTableEntryFromBytes(value))
+	//}
 
 	return entries
 }
