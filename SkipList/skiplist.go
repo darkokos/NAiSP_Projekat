@@ -24,7 +24,7 @@ func NewSkipList(maxHeight int) *SkipList {
 	return &SkipList{
 		maxHeight: maxHeight,
 		height:    0,
-		size:      0,
+		Size:      0,
 		head:      NewSkipListNode("", []byte{}, maxHeight),
 	}
 
@@ -100,7 +100,7 @@ func (s *SkipList) Insert(key string, value []byte) bool {
 		update[i].next[i] = node
 	}
 
-	s.size++
+	s.Size++
 	if level > s.height {
 		s.height = level
 	}
@@ -150,7 +150,7 @@ func (s *SkipList) Delete(key string) bool {
 			update[i].next[i] = current.next[i]
 		}
 
-		s.size--
+		s.Size--
 		for s.height > 0 && s.head.next[s.height] == nil {
 			s.height--
 		}
@@ -173,6 +173,17 @@ func (s *SkipList) PrintList() {
 		}
 	}
 
+}
+
+func (s *SkipList) FirstLevelValues() [][]byte {
+	node := s.head
+	values := make([][]byte, 0, s.Size)
+	for node.next[0] != nil {
+		node = node.next[0]
+		values = append(values, node.value)
+	}
+
+	return values
 }
 
 func SkipListTest() {
