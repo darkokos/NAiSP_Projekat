@@ -20,3 +20,26 @@ func TestSSTableSingleFile(t *testing.T) {
 
 	WriteSSTableOneFile("test_table", sorted_entries)
 }
+
+func TestReadWholeSSTableSingleFile(t *testing.T) {
+
+	iter := GetSSTableIterator("test_table-Data.db")
+
+	if iter == nil {
+		t.Fatalf("Doslo je do greske u otvaranju sstabele")
+	}
+
+	number_of_entries := 0
+	for entry := iter.Next(); iter.Valid; entry = iter.Next() {
+		fmt.Println("Kljuc: ", string(entry.Key), " Vrednost: ", entry.Value)
+		number_of_entries++
+	}
+
+	if number_of_entries != 5 {
+		t.Fatalf("Nisu procitani svi redovi")
+	}
+
+	if !iter.Ok {
+		t.Fatalf("Doslo je do greske u citanju sstable")
+	}
+}

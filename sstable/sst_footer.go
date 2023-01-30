@@ -7,10 +7,10 @@ const (
 )
 
 type SSTFooter struct {
-	indexOffset    int64
-	summaryOffset  int64
-	filterOffset   int64
-	metadataOffset int64
+	IndexOffset    int64
+	SummaryOffset  int64
+	FilterOffset   int64
+	MetadataOffset int64
 }
 
 func tryReadSSTFooter(f *os.File) {

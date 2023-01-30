@@ -111,7 +111,7 @@ func GetSSTableIterator(filename string) *SSTableIterator {
 
 	} else if magic_number == SSTABALE_SINGLE_FILE_MAGIC_NUMBER {
 		//TODO: Konstrukcija iteratora za sstabelu koja je jedan fajl
-		footer := SSTFooter{}
+		footer := &SSTFooter{}
 		_, err := sstFile.Seek((SST_FOOTER_SIZE+SSTABLE_MAGIC_NUMBER_SIZE)*-1, io.SeekEnd)
 		if err != nil {
 			return nil
@@ -122,7 +122,13 @@ func GetSSTableIterator(filename string) *SSTableIterator {
 			return nil
 		}
 
-		iter := SSTableIterator{sstFile: sstFile, end_offset: footer.indexOffset, Valid: true, Ok: true}
+		// Moramo se vratiti na pocetak nakon citanja footer-a
+		_, err = sstFile.Seek(0, io.SeekStart)
+		if err != nil {
+			return nil
+		}
+
+		iter := SSTableIterator{sstFile: sstFile, end_offset: footer.IndexOffset, Valid: true, Ok: true}
 		return &iter
 
 	} else {
