@@ -1,5 +1,4 @@
 package BTree
-import "fmt"
 type KvPair struct {
 	key [] byte
 	val [] byte
