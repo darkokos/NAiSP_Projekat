@@ -1,38 +1,35 @@
-//TODO: -Implementirati da uzima maksimalan nivo iz configa
-//      -Pravljenje SSTabela(mada ne znam da li ovo treba u memtable da se implementira ili ovde)
-
 package lsmtree
 
 import (
 	"fmt"
 	"strconv"
 
-	memtable "github.com/darkokos/NAiSP_Projekat/memtable"
-	sstable "github.com/darkokos/NAiSP_Projekat/sstable"
+	"github.com/darkokos/NAiSP_Projekat/config"
+	"github.com/darkokos/NAiSP_Projekat/memtable"
+	"github.com/darkokos/NAiSP_Projekat/sstable"
 )
 
-// Pravi LSMTree sa memtabelom,ss tabelama,maksimalnim nivoom i trenutnim najvecim nivoom
+// Pravi LSMTree sa memtabelom,maksimalnim nivoom i trenutnim najvecim nivoom
 type LogStructuredMergeTree struct {
 	memtable     memtable.MemTable
-	sstables     []string
 	level        int
 	currentlevel int
 }
 
-func NewLogStructuredMergeTree(capacity int, LSMlevel int) *LogStructuredMergeTree {
+func NewLogStructuredMergeTree(capacity int) *LogStructuredMergeTree {
 	return &LogStructuredMergeTree{
 		memtable:     *memtable.MakeHashMapMemTable(capacity),
-		sstables:     make([]string, 0),
-		level:        LSMlevel,
+		level:        int(config.Configuration.LSMTreeLevels),
 		currentlevel: findlevel(),
 	}
+
 }
 
 // Trazi trenutni najveci nivo
 func findlevel() int {
 	i := 1
 	for {
-		iter := sstable.GetSSTableIterator("level-" + fmt.Sprint(i) + "-usertable-000001-Data.db")
+		iter := sstable.GetSSTableIterator("level-" + fmt.Sprint(i) + "-usertable-000001--Data.db")
 		if iter == nil {
 			return i
 		}
@@ -49,7 +46,6 @@ func (lsmt *LogStructuredMergeTree) Get(key []byte) (string, bool) { //trazi prv
 		return lsmt.FindInSSTable(key)
 
 	}
-
 }
 
 // Trazi kljuc u svim SS tabelama
@@ -63,19 +59,19 @@ func (lsmt *LogStructuredMergeTree) FindInSSTable(key []byte) (string, bool) {
 			levelstr = fmt.Sprint(i)
 		}
 		if i == 1 {
-			iter := sstable.GetSSTableIterator("level-" + levelstr + "-usertable-000001-Data.db")
-			for entry := iter.Next(); iter.Valid; entry = iter.Next() {
-				if string(entry.Key) == string(key) {
-					return string(entry.Value), true
-				}
+			entrystr := "level-" + levelstr + "-usertable-000001"
+			entry := sstable.ReadOneSSTEntryWithKey(key, entrystr+"--Data.db", entrystr+"--Index.db", entrystr+"--Summary.db", entrystr+"--Filter.db")
+			if entry == nil {
+			} else {
+				return string(entry.Value), true
 			}
 		} else {
 			for j := 1; j < 3; j++ {
-				iter := sstable.GetSSTableIterator("level-" + levelstr + "-usertable-00000" + strconv.Itoa(j) + "-Data.db")
-				for entry := iter.Next(); iter.Valid; entry = iter.Next() {
-					if string(entry.Key) == string(key) {
-						return string(entry.Value), true
-					}
+				entrystr := "level-" + levelstr + "-usertable-00000" + strconv.Itoa(j)
+				entry := sstable.ReadOneSSTEntryWithKey(key, entrystr+"--Data.db", entrystr+"--Index.db", entrystr+"--Summary.db", entrystr+"--Filter.db")
+				if entry == nil {
+				} else {
+					return string(entry.Value), true
 				}
 			}
 		}
@@ -83,4 +79,83 @@ func (lsmt *LogStructuredMergeTree) FindInSSTable(key []byte) (string, bool) {
 	}
 	fmt.Println("Ne nalazi se ni u jednoj sstabeli niti memtable")
 	return "", false
+
+}
+
+// Funkcija uzima dva fajla, i pravi sortirani treci fajl
+func merge(file1 string, file2 string, outputstring string) bool {
+	iterator1 := sstable.GetSSTableIterator(file1)
+	iterator2 := sstable.GetSSTableIterator(file2)
+	writer := sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
+	writer.Open(outputstring)
+	entry1 := iterator1.Next()
+	entry2 := iterator2.Next()
+	for {
+		if iterator1.Valid && iterator2.Valid {
+			if string(entry1.Key) < string(entry2.Key) {
+				if !entry1.Tombstone {
+					writer.Put(entry1)
+				}
+				entry1 = iterator1.Next()
+				continue
+			} else {
+				if string(entry2.Key) < string(entry1.Key) {
+					if !entry2.Tombstone {
+						writer.Put(entry2)
+					}
+					entry2 = iterator2.Next()
+					continue
+				} else {
+					if string(entry2.Key) == string(entry1.Key) {
+						if entry1.Timestamp > entry2.Timestamp {
+							if !entry1.Tombstone {
+								writer.Put(entry1)
+							} else {
+								if !entry2.Tombstone {
+									writer.Put(entry2)
+								}
+							}
+							entry1 = iterator1.Next()
+							entry2 = iterator2.Next()
+							continue
+						} else {
+							if entry1.Timestamp < entry2.Timestamp {
+								if !entry2.Tombstone {
+									writer.Put(entry2)
+								} else {
+									if !entry1.Tombstone {
+										writer.Put(entry1)
+									}
+								}
+								entry1 = iterator1.Next()
+								entry2 = iterator2.Next()
+								continue
+							}
+						}
+					}
+				}
+
+			}
+		}
+		if !iterator1.Valid && iterator2.Valid {
+			if !entry2.Tombstone {
+				writer.Put(entry2)
+			}
+			entry2 = iterator2.Next()
+			continue
+		}
+		if iterator1.Valid && !iterator2.Valid {
+			if !entry1.Tombstone {
+				writer.Put(entry1)
+			}
+			entry1 = iterator1.Next()
+			continue
+		}
+		if !iterator1.Valid && !iterator2.Valid {
+			break
+		}
+
+	}
+	writer.CloseFiles()
+	return true
 }
