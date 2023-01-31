@@ -180,7 +180,7 @@ func (iter *SummaryIterator) Seek(key string) *SummaryEntry {
 	}
 
 	for entry := iter.Next(); iter.Valid; entry = iter.Next() {
-		if entry.FirstKey <= key && key <= entry.LastKey {
+		if key <= entry.LastKey && entry.FirstKey <= key {
 			return entry
 		}
 	}

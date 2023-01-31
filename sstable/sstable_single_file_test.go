@@ -4,8 +4,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/darkokos/NAiSP_Projekat/memtable"
 )
@@ -133,10 +135,10 @@ func TestReadSSTableByKeySingleFile(t *testing.T) {
 func TestWriteIntense(t *testing.T) {
 	entries := make([]*memtable.MemTableEntry, 0)
 
-	for i := uint64(0); i < 10000; i += 2 {
-		key := fmt.Sprintf("%04d", i)
+	for i := uint64(0); i < 20000; i += 2 {
+		key := fmt.Sprintf("%05d", i)
 		value := make([]byte, 8)
-		binary.BigEndian.PutUint64(value, i)
+		binary.LittleEndian.PutUint64(value, i)
 		entries = append(entries, memtable.CreateEntry([]byte(key), value))
 	}
 
@@ -145,24 +147,43 @@ func TestWriteIntense(t *testing.T) {
 
 func TestReadIntense(t *testing.T) {
 
-	// ~5000 neuspesnih citanja
-	for i := uint64(1); i < 10000; i += 2 {
-		if i%10000 == 0 {
-			fmt.Println(i)
-		}
-		key := []byte(fmt.Sprintf("%04d", i))
-		if ReadOneSSTEntryWithKey(key, "intense_table-Data.db", "", "", "") != nil {
-			t.Fatalf("Nije trebalo da nje kljuc %s", key)
+	// ~10000 neuspesnih citanja
+	for i := uint64(1); i < 20000; i += 2 {
+		key := []byte(fmt.Sprintf("%05d", i))
+		entry := ReadOneSSTEntryWithKey(key, "intense_table-Data.db", "", "", "")
+		if entry != nil {
+			t.Fatalf("Nije trebalo da nadje kljuc %s", key)
 		}
 	}
 
-	// Summary_density je bas mali
-	// 5000 uspesnih citanja - Glavni uticaj na sporocu ovog testa ako je summary_density mali
+	// 10000 uspesnih citanja - Glavni uticaj na sporocu ovog testa ako je summary_density mali (3)
 	// Ovi prvi ni ne prodju filter
-	for i := uint64(0); i < 10000; i += 2 {
-		key := []byte(fmt.Sprintf("%04d", i))
-		if ReadOneSSTEntryWithKey(key, "intense_table-Data.db", "", "", "") == nil {
-			t.Fatalf("Trebalo da nje kljuc %s", key)
+	for i := uint64(0); i < 20000; i += 2 {
+		key := []byte(fmt.Sprintf("%05d", i))
+		entry := ReadOneSSTEntryWithKey(key, "intense_table-Data.db", "", "", "")
+		if entry == nil {
+			t.Fatalf("Trebalo da nadje kljuc %s", key)
+		} else if entry.Value[0] != byte(i%256) {
+			t.Fatalf("Nije dobro porictana vrednost")
 		}
 	}
+}
+
+func Test100000RandomStrings(t *testing.T) {
+	rand.Seed(time.Now().Unix())
+	length := 10
+
+	for rep := 0; rep < 100000; rep++ {
+		ran_str := make([]byte, length)
+
+		// Generating Random string
+		for i := 0; i < length; i++ {
+			ran_str[i] = byte(65 + rand.Intn(25))
+		}
+
+		if ReadOneSSTEntryWithKey(ran_str, "intense_table-Data.db", "", "", "") != nil {
+			t.Fatalf("Nije trebalo da nadje kljuc %s", ran_str)
+		}
+	}
+
 }
