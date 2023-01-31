@@ -207,11 +207,19 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 		// InsertKey ce pred deljenje napraviti jedno dete u nizu koje ce biti prazno tj. keys ce mu biti prazan (dodace se onaj emptyNode)
 		// Izuzetak je ako se pravi novi koren, tu smo definisali da ce dobiti dvoje dece
 		// Na to prazno dete ocito ide levo dete (u korenu ce odmah prvo dete biti prazno)
+		// Medjutim to nije slucaj ako smo kljuc dodali na kraj
+		// Onda je to zapravo mesto za novo desno dete
 
 		for i, child := range (*parent).children {
 			if len(child.keys) == 0 {
-				parent.children[i] = &leftChild
-				parent.children[i+1] = &rightChild
+				if i != len(parent.keys) {
+					parent.children[i] = &leftChild
+					parent.children[i+1] = &rightChild
+				} else {
+					parent.children[i-1] = &leftChild
+					parent.children[i] = &rightChild
+				}
+
 			}
 		}
 
