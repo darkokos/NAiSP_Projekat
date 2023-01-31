@@ -10,6 +10,12 @@ import (
 	"github.com/darkokos/NAiSP_Projekat/merkleTree"
 )
 
+// Sturkutra koja omogucava pisanje SSTable-a zapis po zapis
+// Ocekivana upotreba:
+// writer := GetSSTableFileWriter(true/false)
+// writer.open("level-xx-usertable-xxxxxx")
+// writer.Put(zapis) za svaki zapis
+// writer.Close()
 type SSTFileWriter struct {
 	sstFile           *os.File
 	summaryFile       *os.File
