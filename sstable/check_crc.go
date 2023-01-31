@@ -15,6 +15,8 @@ func CheckSSTEntryCRC(entry *SSTableEntry) bool {
 	return crc_calculated == entry.CRC
 }
 
+// Funkcija racuna CRC za polja SSTabele/WAL-a koja su data kao parametri.
+// Vraca int32 koji predstavlja izracunat CRC.
 func CalculateCRC(timestamp int64, tombstone bool, keySize uint64, valueSize uint64, key []byte, value []byte) uint32 {
 	crc_calculated := crc32.NewIEEE()
 

@@ -13,6 +13,7 @@ import (
 // [Velicina pocetnog kljuca (8B) | Velicina krajnjeg kljuca (8B) | Pocetni kljuc (?B) | Krajnji kljuc (?B) | Offset u indeksu (8B)] x N
 // Footer: [Velicina prvog kljuca (8B) | Velicina poslednjeg kljuca (8B) | Prvi kljuc (?B) | Poslednji kljuc (?B)]
 
+// Ova struktura sluzi omogucava citanje Summary-a zapis po zapis sa diska
 type SummaryIterator struct {
 	summaryFile *os.File
 	end_offset  int64
@@ -22,6 +23,10 @@ type SummaryIterator struct {
 	Ok          bool
 }
 
+// Funkcija dobavlja granice summary-a
+// Vraca redom prvi kljuc data dela, poslednji kljuc data dela, poziciju na
+// kojoj se nalazi footer i bool vrednost koja govori da li je doslo do greske.
+// Pozicija gde se nalazi footer predstavlja kraj summary-a.
 func getBeginEndKeysAndFooterOffset(summary_file *os.File) (begin_key []byte, end_key []byte, footer_offset int64, ok bool) {
 	bytes_read := make([]byte, 8)
 
@@ -60,6 +65,9 @@ func getBeginEndKeysAndFooterOffset(summary_file *os.File) (begin_key []byte, en
 	return first_key, last_key, footerOffset, true
 }
 
+// Konstruise SummaryIterator za Summary fajl SSTabele koja je zapisana u vise fajlova.
+// Vraca konstruisani iterator.
+// Vraca nil ako je doslo do greske.
 func getSummaryIteratorFromFile(filename string) *SummaryIterator {
 	summary_file, err := os.Open(filename)
 
@@ -79,7 +87,7 @@ func getSummaryIteratorFromFile(filename string) *SummaryIterator {
 		return nil
 	}
 
-	// Vracamo se na poziciju prvog elementa summary-a
+	// Vracamo se na poziciju prvog elementa summary-a (prvih 8B su pokazivac ka offsetu)
 	_, err = summary_file.Seek(8, io.SeekStart) // TODO: Eliminisati ovaj magicni broj
 	if err != nil {
 		return nil
@@ -90,6 +98,9 @@ func getSummaryIteratorFromFile(filename string) *SummaryIterator {
 	return &iter
 }
 
+// Konstruise SummaryIterator za SSTabelu koju je zapisana kao jedan fajl.
+// Vraca konstruisani iterator.
+// Vraca nil ako je doslo do greske.
 func getSummaryIteratorFromSSTableFile(filename string) *SummaryIterator {
 	//TODO: Summary iterator iz sst fajla
 

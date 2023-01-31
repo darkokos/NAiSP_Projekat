@@ -8,8 +8,10 @@ import (
 
 type IndexEntry struct {
 	KeySize uint64
-	Offset  int64
-	Key     string
+	Offset  int64 // Ako je SSTable vise fajlova: Pozicija zapisa u Data fajlu
+	// Ako je SSTable jedan fajl: Pozicija zapisa u odnosu na pocetak
+	// objedinjenog fajla.
+	Key string
 }
 
 // Funkcija cita sledeci zapis indeksa
@@ -48,6 +50,7 @@ func readIndexEntry(indexFile *os.File) (*IndexEntry, bool) {
 }
 
 // Format zapisa u indeksu je duzina kljuca (8B) - offset (8B) - kljuc(?B)
+// Pise red indeksa u fajl
 func writeIndexEntry(indexFile *os.File, key string, offset uint64) {
 
 	binary.Write(indexFile, binary.LittleEndian, uint64(len(key)))

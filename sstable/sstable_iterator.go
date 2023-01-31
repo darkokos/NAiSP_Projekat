@@ -26,6 +26,10 @@ type SSTableIterator struct {
 // Ako je zaseban fajl - velicina - 8
 // Ako nije zaseban fajl - imamo metaindex
 
+// Cita sledeci zapis iz SSTabele
+// Vraca procitani zapis ili nil ako nema vise zapisa ili ako je doslo do greske
+// Atribut Valid se postavlja false ako nema vise zapisa ili ako je doslo do greske
+// Ako je doslo do greske atribut Ok se postavlja na false
 func (iter *SSTableIterator) Next() *SSTableEntry {
 	cur_pos, _ := iter.sstFile.Seek(0, io.SeekCurrent)
 
@@ -53,6 +57,9 @@ func (iter *SSTableIterator) Next() *SSTableEntry {
 
 }
 
+// Funkcija postavlja iterator na odredjenu poziciju u fajlu
+// Ne vrsi provere granica sstabele
+// Ako dodje do greske postavlja Valid i Ok na false
 func (iter *SSTableIterator) SeekToOffset(offset int64) {
 	_, err := iter.sstFile.Seek(offset, io.SeekStart)
 	if err != nil {
@@ -63,6 +70,10 @@ func (iter *SSTableIterator) SeekToOffset(offset int64) {
 
 }
 
+// Funkcija cita zapise iz sstabele dok ne naidje na kraj opsega iz kog moze
+// citati ili dok ne nadje zapis sa datim kljucem. Potom zatvara fajl i invalidira iterator.
+// Postavlja Ok na false ako dodje do greske u citanju fajla.
+// Vraca zapis iz SSTabele ako je nadjen ili nil
 func (iter *SSTableIterator) SeekAndClose(key []byte) *SSTableEntry {
 
 	//TODO: Mozda ne bi trebalo da radimo ova silna pretvaranja u stringove
@@ -95,6 +106,10 @@ func (iter *SSTableIterator) Tell() int64 {
 
 }
 
+// Funkcija konstruise iterator SSTabele koja se nalazi u fajlu filename.
+// Funkcija sama detektuje vrstu SSTabele.
+// Vraca nil ako dodje do greske ili ako je prosledjen naziv fajla koji ne
+// predstavlja SSTabelu.
 func GetSSTableIterator(filename string) *SSTableIterator {
 	//TODO: Osigurati da se zatvara fajl nakon return nil
 	sstFile, err := os.Open(filename)

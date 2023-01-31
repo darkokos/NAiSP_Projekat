@@ -13,6 +13,10 @@ const (
 	FALSE_POSITIVE_RATE = 0.01
 )
 
+// Ova funkcija se ne koristi - Pisanje bloom filtera je implementirano u sst_file_writer.go,
+// ali je zasnovano na ovoj funkciji.
+// Pise bloom filter u fajl tamo gde je postavljen fajl deskriptor f.
+// Kao parametar prima memtable entry-e koje treba upisati.
 func writeFilter(f *os.File, entries []*memtable.MemTableEntry) {
 
 	// TODO: Konfigurasti false-positive rate
@@ -30,6 +34,8 @@ func writeFilter(f *os.File, entries []*memtable.MemTableEntry) {
 	binary.Write(f, binary.LittleEndian, filter_bytes)
 }
 
+// Cita bloom filter koji pocinje na poziciji gde je postavljen fajl
+// deskriptor f.
 func readFilter(f *os.File) *bloomfilter.BloomFilter {
 
 	bloom_filter_size_bytes := make([]byte, 8)
@@ -53,6 +59,8 @@ func readFilter(f *os.File) *bloomfilter.BloomFilter {
 	return &filter
 }
 
+// Cita bloom filter koji se nalazi u zasebnom fajlu.
+// Vraca bloom filter koji je procitan ili nil ako je doslo do greske.
 func ReadFilterAsSeparateFile(filename string) *bloomfilter.BloomFilter {
 	filterFile, err := os.Open(filename)
 	defer filterFile.Close()
@@ -66,6 +74,8 @@ func ReadFilterAsSeparateFile(filename string) *bloomfilter.BloomFilter {
 	return filter
 }
 
+// Nalazi bloom filter u SSTabeli koja je zapisana kao jedan fajl i cita ga.
+// Vraca bloom filter koji je procitan ili nil ako je doslo do greske.
 func ReadFilterFromSSTFile(filename string) *bloomfilter.BloomFilter {
 	sstFile, err := os.Open(filename)
 	if err != nil {

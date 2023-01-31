@@ -11,20 +11,23 @@ import (
 )
 
 type SSTFileWriter struct {
-	sstFile             *os.File
-	summaryFile         *os.File
-	indexFile           *os.File
-	filterFile          *os.File
-	metadataFile        *os.File
-	tocFile             *os.File
-	is_multiple_files   bool // TODO: Mozda cak ni ovo ne treba da bude tu kad budemo imali citanje konfiguracije
-	records_written     int
+	sstFile           *os.File
+	summaryFile       *os.File
+	indexFile         *os.File
+	filterFile        *os.File
+	metadataFile      *os.File
+	tocFile           *os.File
+	is_multiple_files bool // TODO: Mozda cak ni ovo ne treba da bude tu kad budemo imali citanje konfiguracije
+	records_written   int  // Broj zapisa koji su zapisani
+
+	// Vrednosti neophodne za pravilno pisanje summary-a
 	next_summary_key    []byte
 	next_summary_offset int64
 	last_key_written    []byte
 	first_key_written   []byte
-	valuesWritten       [][]byte // Mora zbog merkle stabla
-	Ok                  bool
+
+	valuesWritten [][]byte // Mora zbog merkle stabla - sve vrednosti koje su bile zapisane u SSTabelu
+	Ok            bool     // Da li je doslo do greske u pisanju SSTabele
 }
 
 // Funkcija konstruise jedan SSTFileWriter
@@ -118,6 +121,10 @@ func (writer *SSTFileWriter) Open(base_name string) {
 	}
 }
 
+// Funkcija upisuje jedan SSTableEntry u SSTable
+// U SSTable se upisuju entry-i redom koji su prosledjivani kroz ovu funkciju. Ne vrsi se sortiranje.
+// Ako je writer u rezimu pisanja u vise fajlova, dodavace i zapise u index i summary
+// Ako dodje do greske atribut Ok ce biti postavljen na false
 func (writer *SSTFileWriter) Put(entry *SSTableEntry) {
 	summary_density := 3
 
@@ -161,6 +168,7 @@ func (writer *SSTFileWriter) Put(entry *SSTableEntry) {
 	}
 }
 
+// Zatvara fajlove koje je writer otvorio
 func (writer *SSTFileWriter) CloseFiles() {
 	writer.sstFile.Close()
 	if writer.is_multiple_files {
@@ -172,6 +180,9 @@ func (writer *SSTFileWriter) CloseFiles() {
 	}
 }
 
+// Kompletira proces pravljenja SSTabele
+// Pise pomocne strukture na odgovarajuca mesta i zatvara fajlove.
+// Ako dodje do greske atribut Ok ce biti postavljen na false.
 func (writer *SSTFileWriter) Finish() {
 	summary_density := 3 //TODO: I ovde zameniti summary_density
 

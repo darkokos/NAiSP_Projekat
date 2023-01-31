@@ -8,13 +8,14 @@ import (
 	wal "github.com/darkokos/NAiSP_Projekat/WAL"
 )
 
+// Struktura koja predstavlja jedan zapis u summary-u
 type SummaryEntry struct {
 	FirstKey string
 	LastKey  string
 	Offset   int64
 }
 
-// Pise deo summary-a koji sadrzi granice sstabele
+// Pise deo summary-a koji sadrzi granice sstabele (prvi i poslednji kljuc)
 func writeSummaryHeader(f *os.File, first []byte, last []byte) {
 	begin_key_size_bytes := make([]byte, wal.KEY_SIZE_SIZE)
 	end_key_size_bytes := make([]byte, wal.KEY_SIZE_SIZE)
@@ -44,9 +45,10 @@ func writeSummaryHeader(f *os.File, first []byte, last []byte) {
 
 }
 
-//Ospezi u summary-u su intervali oblika [pocetak, kraj)
+// Pise jedan zapis summary-a
+// Ospezi u summary-u su intervali oblika [pocetak, kraj)
 func writeSummaryEntry(f *os.File, first []byte, last []byte, offset int64) {
-	writeSummaryHeader(f, first, last)
+	writeSummaryHeader(f, first, last) // Prvi i poslednji kljuc su takodje elementi i header-a pa mozemo ovo uraditi
 
 	offset_bytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(offset_bytes, uint64(offset))
@@ -54,6 +56,9 @@ func writeSummaryEntry(f *os.File, first []byte, last []byte, offset int64) {
 	binary.Write(f, binary.LittleEndian, offset_bytes)
 }
 
+// Cita summary zapis iz fajla
+// Vraca procitani zapis i true ako je sve uredu.
+// Ako je doslo do greske vraca nil i false.
 func readSummaryEntry(summary_file *os.File) (*SummaryEntry, bool) {
 
 	size_bytes := make([]byte, 8)

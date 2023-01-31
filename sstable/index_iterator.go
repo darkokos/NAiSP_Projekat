@@ -34,9 +34,9 @@ func getIndexIteratorFromIndexFile(filename string) *IndexIterator {
 	return &iter
 }
 
-//Pravi IndexIterator koji iterira kroz indeks koji je u okviru SSTabele
+// Pravi IndexIterator koji iterira kroz indeks koji je u okviru SSTabele
+// koja je zapisana kao jedan fajl
 func getIndexIteratorFromSSTableFile(filename string) *IndexIterator {
-	//TODO: Pravljenje indeks iteratora za sstabelu koja je jedan fajl
 	sstFile, err := os.Open(filename)
 	if err != nil {
 		sstFile.Close()
@@ -62,6 +62,9 @@ func getIndexIteratorFromSSTableFile(filename string) *IndexIterator {
 	return iter
 }
 
+// Funkcija cita sledeci zapis iz indeksa.
+// Moze invalidirati iterator ako dodje do greske. U tom slucaju, atribut Ok
+// se postavlja na false.
 func (iter *IndexIterator) Next() *IndexEntry {
 	cur_pos, _ := iter.indexFile.Seek(0, io.SeekCurrent)
 

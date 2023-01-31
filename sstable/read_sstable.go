@@ -1,8 +1,5 @@
 package sstable
 
-//TODO: Citanje iz spojenog fajla
-//TODO: Trazenje po indeksu
-
 import (
 	"encoding/binary"
 	"fmt"
@@ -102,6 +99,13 @@ func ReadOneSSTEntry(sstableFile *os.File) (entry *SSTableEntry, ok bool) {
 	}
 }
 
+// Funkcija trazi zapis u SSTabeli koji ima kljuc key
+// Funkcija vraca nadjeni zapis ili nil ako nema tog zapisa u SSTabeli ili ako
+// je doslo do greske u citanju SStabele
+// Ukoliko je indexFilename prazan string, funkcija ce tretirati SSTable kao
+// strukturu koja je samo u jednom fajlu.
+// U suprotnom se index, summary i filter se redom citaju iz fajlova
+// indexFilename, summaryFilename i filterFilename
 func ReadOneSSTEntryWithKey(key []byte, sstFileName string, indexFilename string, summaryFilename string, filterFilename string) *SSTableEntry {
 
 	key_string := string(key)
@@ -118,10 +122,6 @@ func ReadOneSSTEntryWithKey(key []byte, sstFileName string, indexFilename string
 		filter = ReadFilterAsSeparateFile(filterFilename)
 
 	} else {
-		//TODO: Pretraga jednog fajla
-		//Iscitaj gde se sta nalazi i postavi offsete
-		//fmt.Println("Nije implementirano")
-
 		summaryIterator = getSummaryIteratorFromSSTableFile(sstFileName)
 		indexIterator = getIndexIteratorFromSSTableFile(sstFileName)
 		sstableIterator = GetSSTableIterator(sstFileName)

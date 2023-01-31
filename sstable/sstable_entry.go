@@ -8,6 +8,8 @@ import (
 // Format SSTable i WAL-a su isti
 type SSTableEntry wal.WALEntry
 
+// Pravi SSTable zapis od MemTable zapisa
+// Prakticno receno: wrapper za racunanje CRC-a
 func CreateSSTableEntryFromMemTableEntry(memtableEntry *memtable.MemTableEntry) *SSTableEntry {
 
 	entry := SSTableEntry{

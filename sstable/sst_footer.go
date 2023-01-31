@@ -10,11 +10,13 @@ const (
 	SST_FOOTER_SIZE = 4 * 8
 )
 
+// Struktura koja predstavlja Footer SSTabele koja se pise kao jedan fajl
 type SSTFooter struct {
-	IndexOffset    int64
-	SummaryOffset  int64
-	FilterOffset   int64
-	MetadataOffset int64
+	IndexOffset    int64 // Pozicija na kojoj pocinje indeks
+	SummaryOffset  int64 // Pozicija na kojoj pocinje summary
+	FilterOffset   int64 // Pozicija na kojoj pocinje filter
+	MetadataOffset int64 // Pozicija na kojoj pocinje metadata
+	// Napomena: metadata se zavrsava na <velicina fajla> - SSTABLE_MAGIC_NUMBER_SIZE - SST_FOOTER_SIZE
 }
 
 // Cita footer iz sst fajla ili vraca nil ako je doslo do greske
