@@ -27,7 +27,10 @@ func TestSSTableSingleFile(t *testing.T) {
 }
 
 func TestReadWholeSSTableSingleFile(t *testing.T) {
-
+	// Postoji nasumicna sansa da ovaj test ne prodje jer se magicni broj slucajno
+	// pojavi u sred footer-a
+	// Problem se resi kada obrisem tabelu i opet pokrenem testove.
+	// Zasto se ovo dogadja? Nigde ne pisem po SSTabeli, a TestSSTableSingleFile treba da kreira novi fajl.
 	iter := GetSSTableIterator("test_table_fused-Data.db")
 
 	if iter == nil {
