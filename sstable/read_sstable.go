@@ -2,7 +2,6 @@ package sstable
 
 import (
 	"encoding/binary"
-	"fmt"
 	"io"
 	"os"
 
@@ -133,7 +132,7 @@ func ReadOneSSTEntryWithKey(key []byte, sstFileName string, indexFilename string
 	}
 
 	if !filter.Find(key) {
-		fmt.Println("Nije prosao filter")
+		//fmt.Println("Nije prosao filter")
 		return nil
 	}
 

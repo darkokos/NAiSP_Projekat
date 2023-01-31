@@ -129,3 +129,40 @@ func TestReadSSTableByKeySingleFile(t *testing.T) {
 	}
 
 }
+
+func TestWriteIntense(t *testing.T) {
+	entries := make([]*memtable.MemTableEntry, 0)
+
+	for i := uint64(0); i < 10000; i += 2 {
+		key := fmt.Sprintf("%04d", i)
+		value := make([]byte, 8)
+		binary.BigEndian.PutUint64(value, i)
+		entries = append(entries, memtable.CreateEntry([]byte(key), value))
+	}
+
+	WriteSSTableOneFile("intense_table", entries)
+}
+
+func TestReadIntense(t *testing.T) {
+
+	// ~5000 neuspesnih citanja
+	for i := uint64(1); i < 10000; i += 2 {
+		if i%10000 == 0 {
+			fmt.Println(i)
+		}
+		key := []byte(fmt.Sprintf("%04d", i))
+		if ReadOneSSTEntryWithKey(key, "intense_table-Data.db", "", "", "") != nil {
+			t.Fatalf("Nije trebalo da nje kljuc %s", key)
+		}
+	}
+
+	// Summary_density je bas mali
+	// 5000 uspesnih citanja - Glavni uticaj na sporocu ovog testa ako je summary_density mali
+	// Ovi prvi ni ne prodju filter
+	for i := uint64(0); i < 10000; i += 2 {
+		key := []byte(fmt.Sprintf("%04d", i))
+		if ReadOneSSTEntryWithKey(key, "intense_table-Data.db", "", "", "") == nil {
+			t.Fatalf("Trebalo da nje kljuc %s", key)
+		}
+	}
+}

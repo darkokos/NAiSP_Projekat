@@ -132,7 +132,7 @@ func (writer *SSTFileWriter) Open(base_name string) {
 // Ako je writer u rezimu pisanja u vise fajlova, dodavace i zapise u index i summary
 // Ako dodje do greske atribut Ok ce biti postavljen na false
 func (writer *SSTFileWriter) Put(entry *SSTableEntry) {
-	summary_density := 3
+	summary_density := 128
 
 	key := entry.Key
 	//value := entry.Value
@@ -190,7 +190,7 @@ func (writer *SSTFileWriter) CloseFiles() {
 // Pise pomocne strukture na odgovarajuca mesta i zatvara fajlove.
 // Ako dodje do greske atribut Ok ce biti postavljen na false.
 func (writer *SSTFileWriter) Finish() {
-	summary_density := 3 //TODO: I ovde zameniti summary_density
+	summary_density := 128 //TODO: I ovde zameniti summary_density
 
 	endOfData, err := writer.sstFile.Seek(0, io.SeekCurrent)
 	if err != nil {
