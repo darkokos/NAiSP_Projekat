@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 )
 
+// Cita MemTableEntryIzBajtova
 func memTableEntryFromBytes(byte_arr []byte) *MemTableEntry {
 	entry := &MemTableEntry{}
 	decoder := gob.NewDecoder(bytes.NewBuffer(byte_arr[:]))
@@ -15,6 +16,7 @@ func memTableEntryFromBytes(byte_arr []byte) *MemTableEntry {
 	return entry
 }
 
+// Pretvara MemTableEntry u niz bajtova
 func memTableEntryToBytes(entry *MemTableEntry) []byte {
 	buf := &bytes.Buffer{}
 	encoder := gob.NewEncoder(buf)
