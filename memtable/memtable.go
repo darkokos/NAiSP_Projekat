@@ -5,14 +5,24 @@ import (
 )
 
 type MemTable struct {
-	data       *HashMapInternal
+	data       MemTableInternal
 	capacity   int
 	generation int
 }
 
-func makeHashMapMemTable(capacity int) *MemTable {
-	memTable := MemTable{data: makeHashMapInternal(capacity), capacity: capacity, generation: 0}
+func MakeHashMapMemTable(capacity int) *MemTable {
+	memTable := MemTable{data: MakeHashMapInternal(capacity), capacity: capacity, generation: 0}
 	return &memTable
+}
+
+func MakeSkipListMemTable(capacity int) *MemTable {
+	memTable := MemTable{data: MakeSkipListInternal(), capacity: capacity, generation: 0}
+	return &memTable
+}
+
+func MakeBTreeMemTable(capacity int) *MemTable {
+	memtable := MemTable{data: MakeBTreeInternal(), capacity: capacity, generation: 0}
+	return &memtable
 }
 
 func (memTable *MemTable) remakeStructure() {
@@ -24,7 +34,7 @@ func (memTable *MemTable) Get(key string) ([]byte, bool) {
 	v, ok := memTable.data.Get(key)
 
 	if ok {
-		return v.value, ok
+		return v.Value, ok
 	} else {
 		return nil, ok
 	}
@@ -59,7 +69,7 @@ func (memTable *MemTable) IsDeleted(key string) bool {
 	if !ok {
 		return false
 	} else {
-		return v.tombstone
+		return v.Tombstone
 	}
 }
 
@@ -68,7 +78,7 @@ func (memTable *MemTable) Flush() {
 	memTableEntries := memTable.data.GetSortedEntries()
 
 	for _, entry := range memTableEntries {
-		fmt.Println("Kljuc: ", string(entry.key), "Vrednost: ", entry.value, "Timestamp:", entry.timestamp, "Obrisan: ", entry.tombstone)
+		fmt.Println("Kljuc: ", string(entry.Key), "Vrednost: ", entry.Value, "Timestamp:", entry.Timestamp, "Obrisan: ", entry.Tombstone)
 	}
 
 	//TODO: Formiranje SSTable-a

@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestMemtable(t *testing.T) {
-	memTable := MakeHashMapMemTable(5)
+func TestMemtableSkipList(t *testing.T) {
+	memTable := MakeSkipListMemTable(5)
 
 	memTable.Update("2", []byte{0, 0, 0, 2})
 	memTable.Update("3", []byte{0, 0, 0, 3})

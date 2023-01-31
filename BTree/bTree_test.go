@@ -1,8 +1,11 @@
 package BTree
 
-import "testing"
-import "fmt"
-func Test(t *testing.T){
+import (
+	"fmt"
+	"testing"
+)
+
+func Test(t *testing.T) {
 	tr := BTree{}
 	tr.Init(3)
 	tr.AddKey([]byte{1}, []byte {1})
@@ -28,7 +31,6 @@ func Test(t *testing.T){
 	fmt.Print(tr.GetValue([]byte{6}))
 	fmt.Print("\n")
 
-
 	fmt.Print(tr.GetValue([]byte{7}))
 	fmt.Print(tr.GetValue([]byte{8}))
 	fmt.Print(tr.GetValue([]byte{9}))
@@ -36,6 +38,7 @@ func Test(t *testing.T){
 	fmt.Print("\n")
 	fmt.Print("\n")
 	fmt.Print("TESTING")
+  
 	fmt.Print((*tr.root), "\n")
 	fmt.Print(*(*(*tr.root).children[1]).children[0], "BLA\n")
 	fmt.Print(*(*tr.root).children[0], "\n")
