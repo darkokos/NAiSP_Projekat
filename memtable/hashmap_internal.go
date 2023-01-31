@@ -26,7 +26,7 @@ func (hashmap *HashMapInternal) Update(key string, value []byte) {
 	if ok {
 		v.Value = value
 	} else {
-		hashmap.data[key] = createEntry([]byte(key), value)
+		hashmap.data[key] = CreateEntry([]byte(key), value)
 	}
 }
 

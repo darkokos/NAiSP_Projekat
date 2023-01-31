@@ -229,21 +229,18 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 			if len((*parent).children) != 0 {
 				if x == len((*parent).children) {
 					(*parent).children = append((*parent).children, &leftChild)
-
 				} else {
 					(*parent).children[x] = &leftChild
 				}
 				if x == len((*parent).children)-1 {
 					(*parent).children = append((*parent).children, &rightChild)
 				} else {
-
 					(*parent).children[x+1] = &rightChild
 					(*parent).children = (*parent).children[:len((*parent).children)-1]
 				}
 			} else {
 				(*parent).children = []*BTreeNode{&leftChild, &rightChild}
 			}
-
 			if string(pair.key) < string(leftChild.keys[len(leftChild.keys)-1].key) {
 				leftChild.AddKey(pair, t)
 				return 0
@@ -291,7 +288,6 @@ func (node *BTreeNode) InsertKey(pair KvPair) (int, int) {
 				if len((*node).keys) != (*node).d {
 					(*node).keys = append((*node).keys, pair)
 					(*node).children = append((*node).children, emptyNode)
-
 				} else {
 					over = 1
 				}
@@ -303,11 +299,9 @@ func (node *BTreeNode) InsertKey(pair KvPair) (int, int) {
 					(*node).children = append((*node).children[:i+1], (*node).children[i:]...)
 					(*node).keys[i] = pair
 					(*node).children[i] = emptyNode
-
 				} else {
 					over = 1
 				}
-
 				return over, i
 			}
 		*/

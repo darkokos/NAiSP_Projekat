@@ -21,3 +21,8 @@
 go.work
 
 .vscode
+
+# Files produced by our engine
+*.db
+*TOC.txt
+*Metadata.txt

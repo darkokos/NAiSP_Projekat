@@ -32,7 +32,7 @@ func (skiplistInternal *SkipListInternal) Get(key string) (*MemTableEntry, bool)
 // Ako element postoji postavlja value polje odgovarajuceg MemTableEntry-a na value
 // Ako element ne postoji, konstruise novi MemTableEntry i dodaje ga u strukturu
 func (skiplistInternal *SkipListInternal) Update(key string, value []byte) {
-	newEntry := createEntry([]byte(key), value)
+	newEntry := CreateEntry([]byte(key), value)
 
 	updateSuccesful := skiplistInternal.data.Update(key, memTableEntryToBytes(newEntry))
 	if !updateSuccesful {
