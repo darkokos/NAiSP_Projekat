@@ -145,7 +145,7 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 					// nasli smo sibling koji ima prostora, rotacija
 					for ii, c := range (*(*node).parent).children {
 						if c == node {
-							x = ii
+							x = ii // x je indeks cvora iz kog treba da izbacima u nizu dece njegovog roditelja
 							break
 						}
 					}
@@ -160,7 +160,7 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 					(*(*node).parent).keys[i] = (*node).keys[rotationIndex]
 					(*node).keys = append((*node).keys[:rotationIndex], (*node).keys[rotationIndex+1:]...)
 					(*node).children = append((*node).children[:i], (*node).children[i+1:]...)
-					(*node).AddKey(pair, t)
+					//(*node).AddKey(pair, t) Zbog promene nacina na koji radi insert ovo je sada redundantno
 					return 0
 				}
 			}
@@ -198,9 +198,9 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 			leftChild.children = (*node).children[:int(len((*node).children)/2)+1]
 			rightChild.children = (*node).children[int(len((*node).children)/2)+1:]
 
-			fmt.Print("HOPSLA")
-			fmt.Print(int(len((*node).children) / 2))
-			fmt.Print(*rightChild.children[0])
+			//fmt.Print("HOPSLA")
+			//fmt.Print(int(len((*node).children) / 2))
+			//fmt.Print(*rightChild.children[0])
 
 		}
 		// Ovde trazimo mesto za dva nova cvoru u nizu dece
@@ -320,6 +320,7 @@ func (node *BTreeNode) InsertKey(pair KvPair) (int, int) {
 		(*node).children = append((*node).children, emptyNode)
 		(*node).keys = append((*node).keys, pair)
 	} else {
+		(*node).keys = append((*node).keys, pair) // Ili cemo izgubiti kljuc jer nece biti tu kad se bude radilo deljenje node.keys-a
 		over = 1
 	}
 	return over, len((*node).keys)
