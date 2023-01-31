@@ -176,8 +176,10 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 			parent = (*node).parent
 			(*parent).AddKey((*node).keys[int(len((*node).keys)/2)], t)
 		} else {
+			// Pravi se novi koren
+			// Pravimo prazan cvor i u njega dodajemo jedan kljuc
 			newParent.keys = []KvPair{(*node).keys[int(len((*node).keys)/2)]}
-			newParent.children = []*BTreeNode{emptyNode}
+			newParent.children = []*BTreeNode{emptyNode, emptyNode} // Novi koren bi trebalo da ima dvoje dece
 		}
 		if (*t).root == node {
 			(*t).root = &newParent
@@ -201,39 +203,54 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 			fmt.Print(*rightChild.children[0])
 
 		}
-		var x int
+		// Ovde trazimo mesto za dva nova cvoru u nizu dece
+		// InsertKey ce pred deljenje napraviti jedno dete u nizu koje ce biti prazno tj. keys ce mu biti prazan (dodace se onaj emptyNode)
+		// Izuzetak je ako se pravi novi koren, tu smo definisali da ce dobiti dvoje dece
+		// Na to prazno dete ocito ide levo dete (u korenu ce odmah prvo dete biti prazno)
+
 		for i, child := range (*parent).children {
-			if child == node {
-				(*parent).children = append((*parent).children[:i], (*parent).children[i+1:]...)
-				(*parent).children = append((*parent).children[:i+1], (*parent).children[i:]...)
-				(*parent).children = append((*parent).children[:i+1], (*parent).children[i:]...)
-				x = i
+			if len(child.keys) == 0 {
+				parent.children[i] = &leftChild
+				parent.children[i+1] = &rightChild
 			}
 		}
-		if len((*parent).children) != 0 {
-			if x == len((*parent).children) {
-				(*parent).children = append((*parent).children, &leftChild)
 
+		/*
+			var x int
+			for i, child := range (*parent).children {
+				if child == node {
+					(*parent).children = append((*parent).children[:i], (*parent).children[i+1:]...) // Decu koja su posle, stavi sve pre i
+					// kad je i = 1 i d/len(children) = 3 ovo eliminise jedan cvor
+					(*parent).children = append((*parent).children[:i+1], (*parent).children[i:]...) // Dva
+					(*parent).children = append((*parent).children[:i+1], (*parent).children[i:]...) // ista appenda
+					x = i
+				}
+			}
+			if len((*parent).children) != 0 {
+				if x == len((*parent).children) {
+					(*parent).children = append((*parent).children, &leftChild)
+
+				} else {
+					(*parent).children[x] = &leftChild
+				}
+				if x == len((*parent).children)-1 {
+					(*parent).children = append((*parent).children, &rightChild)
+				} else {
+
+					(*parent).children[x+1] = &rightChild
+					(*parent).children = (*parent).children[:len((*parent).children)-1]
+				}
 			} else {
-				(*parent).children[x] = &leftChild
+				(*parent).children = []*BTreeNode{&leftChild, &rightChild}
 			}
-			if x == len((*parent).children)-1 {
-				(*parent).children = append((*parent).children, &rightChild)
-			} else {
 
-				(*parent).children[x+1] = &rightChild
-				(*parent).children = (*parent).children[:len((*parent).children)-1]
+			if string(pair.key) < string(leftChild.keys[len(leftChild.keys)-1].key) {
+				leftChild.AddKey(pair, t)
+				return 0
 			}
-		} else {
-			(*parent).children = []*BTreeNode{&leftChild, &rightChild}
-		}
-
-		if string(pair.key) < string(leftChild.keys[len(leftChild.keys)-1].key) {
-			leftChild.AddKey(pair, t)
-			return 0
-		}
-		rightChild.AddKey(pair, t)
-		fmt.Print("right", rightChild)
+			rightChild.AddKey(pair, t)
+			fmt.Print("right", rightChild)
+		*/
 	}
 	return 0
 }
