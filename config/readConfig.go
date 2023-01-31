@@ -6,7 +6,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var config Config = Config{
+var Configuration Config = Config{
 	WalSize:             10000000,
 	MemtableSize:        4,
 	MemtableStructure:   "skip_list",
@@ -33,7 +33,7 @@ func ReadConfig() {
 	if err != nil {
 		return
 	}
-	yaml.Unmarshal(configData, &config)
+	yaml.Unmarshal(configData, &Configuration)
 	//fmt.Println(config)
 }
 
