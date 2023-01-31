@@ -37,7 +37,7 @@ func (btreeInternal *BTreeInternal) Get(key string) (*MemTableEntry, bool) {
 // Ako element postoji postavlja value polje odgovarajuceg MemTableEntry-a na value
 // Ako element ne postoji, konstruise novi MemTableEntry i dodaje ga u strukturu
 func (btreeInternal *BTreeInternal) Update(key string, value []byte) {
-	newEntry := createEntry([]byte(key), value)
+	newEntry := CreateEntry([]byte(key), value)
 	newEntryBytes := memTableEntryToBytes(newEntry)
 
 	if newEntryBytes == nil {
