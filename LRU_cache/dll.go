@@ -47,7 +47,13 @@ func (list *Dll) Pop(n int) DllElement {
 		cursor = *cursor.next
 	}
 	(*cursor.prev).next = cursor.next
-	(*cursor.next).prev = cursor.prev
+
+	if cursor.next != nil {
+		// cursor.next je nil ako je pop-ujemo poslednji element
+		// Onda ne postoji cvor posle onog kog pop-ujemo pa
+		// njega ne treba tad prevezivati
+		(*cursor.next).prev = cursor.prev
+	}
 
 	cursor.next = nil //Common sense da bi se izbegle duplirane reference, verovatno nije neophodno
 	cursor.prev = nil

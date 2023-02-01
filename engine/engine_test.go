@@ -109,3 +109,68 @@ func TestEngineWithDeletions(t *testing.T) {
 	}
 
 }
+
+func TestForStaleCache(t *testing.T) {
+	// Brisanje fajlova od proslih testova
+	// Brisemo sve fajlove sa imenima oblika *.db
+	files, err := filepath.Glob("*.db")
+	if err != nil {
+		panic(err)
+	}
+	for _, f := range files {
+		if err := os.Remove(f); err != nil {
+			panic(err)
+		}
+	}
+
+	files, err = filepath.Glob("*.txt")
+	if err != nil {
+		panic(err)
+	}
+	for _, f := range files {
+		if err := os.Remove(f); err != nil {
+			panic(err)
+		}
+	}
+
+	db := GetNewDB()
+	db.Put("101", []byte{101})
+	db.Put("102", []byte{102})
+	db.Put("103", []byte{101})
+	db.Put("104", []byte{102})
+	// Flush
+
+	// Sad je 101 u kesu
+	if db.Get("101") == nil {
+		t.Fatalf("Trebalo je ovo da nadje")
+	}
+
+	db.Put("101", []byte{201})
+	db.Put("102", []byte{102})
+	db.Put("103", []byte{101})
+	db.Put("104", []byte{102})
+	//Flush
+
+	val := db.Get("101")
+	if val == nil {
+		t.Fatalf("Trebalo je ovo da nadje")
+	} else if val[0] != 201 {
+		t.Fatalf("Nije pronadjena dobra vrednost")
+	}
+
+	if db.Get("102") == nil {
+		t.Fatalf("Trebalo je ovo da nadje")
+	} // 102 je sada u kesu
+
+	db.Put("101", []byte{102})
+	db.Delete("102")
+	db.Put("103", []byte{101})
+	db.Put("104", []byte{102})
+	//Flush
+
+	val = db.Get("102") // 102 je obrisan
+	if val != nil {
+		t.Fatalf("Nije trebalo je ovo da nadje")
+	}
+
+}
