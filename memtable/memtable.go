@@ -76,7 +76,14 @@ func (memTable *MemTable) Update(key string, value []byte) bool {
 func (memTable *MemTable) Delete(key string) bool {
 	//Logicko brisanje
 	//Vrati uspesnost
-	return memTable.data.Delete(key)
+	ret_val := memTable.data.Delete(key)
+
+	//Brisanje moze izavati flush
+	if memTable.data.Size() == memTable.capacity {
+		memTable.Flush()
+	}
+
+	return ret_val
 }
 
 // Funkcija proverava da li je element sa datim kljucem bio obrisan tj. da li

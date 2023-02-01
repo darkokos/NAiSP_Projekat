@@ -17,8 +17,11 @@ type MemTableInternal interface {
 	GetSortedEntries() []*MemTableEntry
 
 	// Logicki brise element iz strukture time sto postavlja tombstone na true
-	// ako taj element postoji i vraca true.
-	// Ako ne postoji ne radi nista i vraca false.
+	// ako taj element postoji i vraca true. Takodje se vrednost postavlja na
+	// prazan niz.
+	// Ako postoji element sa tim kljucem i tombstone-om postavljenim na true, ne radi nista i vraca false.
+	// Ako ne postoji dodaje MemTable entry sa prosledjenim kljucem, praznim nizom
+	// kao vrednoscu i tombstone-om postavljenim na true.
 	Delete(key string) bool
 
 	// Fizicki brise sve elemente iz strukture

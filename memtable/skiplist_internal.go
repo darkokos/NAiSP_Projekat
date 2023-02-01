@@ -53,8 +53,11 @@ func (skiplistInternal *SkipListInternal) GetSortedEntries() []*MemTableEntry {
 }
 
 // Logicki brise element iz strukture time sto postavlja tombstone na true
-// ako taj element postoji i vraca true.
-// Ako ne postoji ne radi nista i vraca false.
+// ako taj element postoji i vraca true. Takodje se vrednost postavlja na
+// prazan niz.
+// Ako postoji element sa tim kljucem i tombstone-om postavljenim na true, ne radi nista i vraca false.
+// Ako ne postoji dodaje MemTable entry sa prosledjenim kljucem, praznim nizom
+// kao vrednoscu i tombstone-om postavljenim na true.
 func (skiplistInternal *SkipListInternal) Delete(key string) bool {
 	v := skiplistInternal.data.Search(key)
 
@@ -66,13 +69,18 @@ func (skiplistInternal *SkipListInternal) Delete(key string) bool {
 			}
 
 			entry.Tombstone = true
+			entry.Value = []byte{}
 			skiplistInternal.data.Update(key, memTableEntryToBytes(entry))
 			return true
 		} else {
+			// Greska u konverzija MemTableEntry-Byte
 			return false
 		}
 	} else {
-		return false
+		entry := CreateEntry([]byte(key), []byte{})
+		entry.Tombstone = true
+		skiplistInternal.data.Insert(key, memTableEntryToBytes(entry))
+		return true
 	}
 }
 

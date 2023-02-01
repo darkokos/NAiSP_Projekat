@@ -52,16 +52,28 @@ func (hashmap *HashMapInternal) GetSortedEntries() []*MemTableEntry {
 }
 
 // Logicki brise element iz strukture time sto postavlja tombstone na true
-// ako taj element postoji i vraca true.
-// Ako ne postoji ne radi nista i vraca false.
+// ako taj element postoji i vraca true. Takodje se vrednost postavlja na
+// prazan niz.
+// Ako postoji element sa tim kljucem i tombstone-om postavljenim na true, ne radi nista i vraca false.
+// Ako ne postoji dodaje MemTable entry sa prosledjenim kljucem, praznim nizom
+// kao vrednoscu i tombstone-om postavljenim na true.
 func (hashmap *HashMapInternal) Delete(key string) bool {
 	_, ok := hashmap.data[key]
 
 	if !ok {
-		return false
-	} else {
-		hashmap.data[key].Tombstone = true
+		entry := CreateEntry([]byte(key), []byte{})
+		entry.Tombstone = true
+		hashmap.data[key] = entry
+
 		return true
+	} else {
+		if !hashmap.data[key].Tombstone {
+			hashmap.data[key].Tombstone = true
+			return true
+		} else {
+			return false
+		}
+
 	}
 }
 
