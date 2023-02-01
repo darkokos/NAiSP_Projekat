@@ -72,6 +72,15 @@ func (list *Dll) PushNode(el DllElement) {
 	if (*list).IsFull() {
 		(*list).DeleteLast()
 	}
+
+	// Edge case ako je lista prazna
+	if list.size == 0 {
+		list.head = &el
+		list.tail = &el
+		list.size++
+		return
+	}
+
 	(*list).size++
 	(*list.head).prev = &el
 	el.next = (*list).head
@@ -92,4 +101,13 @@ func (list *Dll) DeleteLast() {
 }
 func (list *Dll) GetLast() []byte {
 	return (*list.tail).data
+}
+
+// Funkcija menja vrednost elementa na poziciji n
+// Radi isto sto i Get, ali ne vraca isti element u niz nego ga prvo promeni
+// i ne vraca nikakvu vrednost
+func (list *Dll) Edit(n int, new_value []byte) {
+	e := (*list).Pop(n)
+	e.data = new_value
+	(*list).PushNode(e)
 }

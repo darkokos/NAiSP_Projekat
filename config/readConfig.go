@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
@@ -10,6 +11,17 @@ var Configuration Config = Config{
 	WalSize:             10000000,
 	MemtableSize:        4,
 	MemtableStructure:   "skip_list",
+	LSMTreeLevels:       4,
+	MultipleFileSSTable: true,
+	SummaryDensity:      4,
+	CacheSize:           4,
+	RateLimit:           3,
+}
+
+var DefaultConfiguration Config = Config{
+	WalSize:             10000000,
+	MemtableSize:        4,
+	MemtableStructure:   "b_tree",
 	LSMTreeLevels:       4,
 	MultipleFileSSTable: true,
 	SummaryDensity:      4,
@@ -31,9 +43,17 @@ type Config struct {
 func ReadConfig() {
 	configData, err := ioutil.ReadFile("config.yml")
 	if err != nil {
+		fmt.Println("Nije se ucitala konfiguracija")
+		Configuration = DefaultConfiguration
 		return
 	}
-	yaml.Unmarshal(configData, &Configuration)
+	err = yaml.Unmarshal(configData, &Configuration)
+	fmt.Println(Configuration.MemtableSize)
+	if err != nil {
+		// Ako se desi greska u citanju, koristimo default
+		fmt.Println("Nije se ucitala konfiguracija")
+		Configuration = DefaultConfiguration
+	}
 	//fmt.Println(config)
 }
 

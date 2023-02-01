@@ -17,8 +17,9 @@ type LogStructuredMergeTree struct {
 }
 
 func NewLogStructuredMergeTree(capacity int) *LogStructuredMergeTree {
+	config.ReadConfig()
 	return &LogStructuredMergeTree{
-		Memtable:     *memtable.MakeHashMapMemTable(capacity),
+		Memtable:     *memtable.MakeMemTableFromConfig(),
 		Level:        int(config.Configuration.LSMTreeLevels),
 		Currentlevel: findlevel(),
 	}

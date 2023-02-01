@@ -13,7 +13,8 @@ func (engine *DB) Put(key string, value []byte) bool {
 		// Nije uspelo dodavanje u WAL
 		return false
 	} else {
-		return engine.lsm_tree.Memtable.Update(key, value)
+		engine.cache.Edit(key_bytes, value) // Prevencija zastarelog kesa
+		return engine.memtable.Update(key, value)
 	}
 
 }

@@ -2,13 +2,14 @@ package engine
 
 import (
 	"github.com/darkokos/NAiSP_Projekat/LRU_cache"
-	lsmtree "github.com/darkokos/NAiSP_Projekat/LSMTree"
 	"github.com/darkokos/NAiSP_Projekat/config"
+	"github.com/darkokos/NAiSP_Projekat/memtable"
 )
 
 type DB struct {
 	cache    LRU_cache.Cache
-	lsm_tree *lsmtree.LogStructuredMergeTree
+	memtable memtable.MemTable
+	//lsm_tree *lsmtree.LogStructuredMergeTree
 }
 
 func GetNewDB() *DB {
@@ -17,7 +18,7 @@ func GetNewDB() *DB {
 	cache := LRU_cache.Cache{}
 	cache.Init(int(config.Configuration.CacheSize))
 
-	db := DB{cache: cache, lsm_tree: lsmtree.NewLogStructuredMergeTree(int(config.Configuration.MemtableSize))}
+	db := DB{cache: cache, memtable: *memtable.MakeMemTableFromConfig()}
 
 	return &db
 }
