@@ -16,14 +16,14 @@ func (cache *Cache) Init(capacity int) {
 	(*cache).hMap = map[string]int{}
 	(*cache).list.Init(capacity)
 }
-func (cache *Cache) Access(key []byte) []byte {
+//Metoda kojom ce se pristupati elementu sa kljucem u kesu, ako element sa tim kljucem postoji
+//Vraca element, i statusnu promenljivu sa vrednosti 0 ili -1, ako je statusna promenljiva -1, treba nastaviti sa read pathom i na kraju dodati element u kes
+func (cache *Cache) Access(key []byte) ([]byte, int) {
 	el, ok := (*cache).hMap[string(key)]
 	if ok {
-		return (*cache).list.Get(el)
-	} else {
-		//Pristupi sstabeli i vrati element iz nje, dodaj je u mapu i listu
+		return (*cache).list.Get(el), 0
 	}
-	return []byte{}
+	return []byte{}, -1
 }
 func (cache *Cache) Add(key []byte, val []byte) {
 	for k, _ := range (*cache).hMap {
