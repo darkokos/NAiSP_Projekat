@@ -2,6 +2,7 @@ package memtable
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/darkokos/NAiSP_Projekat/config"
 	"github.com/darkokos/NAiSP_Projekat/sstable"
@@ -107,7 +108,9 @@ func (memTable *MemTable) Flush() {
 	fmt.Println("Flush")
 
 	sstWriter := sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
-	sstWriter.Open("level-01-usertable-" + fmt.Sprintf("%07d", memTable.generation))
+
+	current_time := time.Now().UnixNano() // Kao broj generacije cemo dodeliti vreme kad je sstabela kreirana
+	sstWriter.Open("level-01-usertable-" + fmt.Sprintf("%020d", current_time))
 
 	for _, entry := range memTableEntries {
 		fmt.Println("Kljuc: ", string(entry.Key), "Vrednost: ", entry.Value, "Timestamp:", entry.Timestamp, "Obrisan: ", entry.Tombstone)

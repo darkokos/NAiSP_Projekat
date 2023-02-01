@@ -151,7 +151,7 @@ func TestWriteIntense(t *testing.T) {
 	}
 
 	sstWriter := GetSSTFileWriter(false)
-	sstWriter.Open("test_table_fused")
+	sstWriter.Open("intense_table")
 
 	for _, sstEntry := range entries {
 		sstWriter.Put(sstEntry)
