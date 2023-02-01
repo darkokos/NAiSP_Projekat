@@ -35,6 +35,7 @@ func TestReadWholeSSTableSingleFile(t *testing.T) {
 	// pojavi u sred footer-a
 	// Problem se resi kada obrisem tabelu i opet pokrenem testove.
 	// Zasto se ovo dogadja? Nigde ne pisem po SSTabeli, a TestSSTableSingleFile treba da kreira novi fajl.
+	// Razlog: O_CREATE flag ne brise fajlove i onda mogu ostati stari podaci
 	iter := GetSSTableIterator("test_table_fused-Data.db")
 
 	if iter == nil {

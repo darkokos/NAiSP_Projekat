@@ -50,7 +50,11 @@ func (memTable *MemTable) Get(key string) ([]byte, bool) {
 	v, ok := memTable.data.Get(key)
 
 	if ok {
-		return v.Value, ok
+		if !v.Tombstone {
+			return v.Value, true
+		} else {
+			return nil, false
+		}
 	} else {
 		return nil, ok
 	}

@@ -35,6 +35,7 @@ func CreateSSTableEntry(key []byte, value []byte, timestamp int64, tombstone boo
 		ValueSize: uint64(len(value)),
 		Key:       key,
 		Value:     value,
+		Tombstone: tombstone,
 	}
 
 	return &entry
@@ -51,6 +52,7 @@ func CreateFreshSSTableEntry(key []byte, value []byte) *SSTableEntry {
 		ValueSize: uint64(len(value)),
 		Key:       key,
 		Value:     value,
+		Tombstone: tombstone,
 	}
 
 	return &entry

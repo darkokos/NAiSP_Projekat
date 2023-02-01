@@ -16,9 +16,18 @@ func (engine *DB) Get(key string) []byte {
 	// Prvo trazimo u memtable-u
 	val, ok := engine.memtable.Get(key)
 
+	if engine.memtable.IsDeleted(key) {
+		return nil
+	}
+
 	if ok {
-		engine.cache.Add(key_bytes, val)
+		engine.cache.Add(key_bytes, val) // Da li treba dodavati u kes ako smo citali iz memtable-a?
 		return val
+	}
+
+	// Ako je kljuc bio nedavno obrisan onda odmah vracamo tu informaciju
+	if engine.memtable.IsDeleted(key) {
+		return nil
 	}
 
 	// Da li je element u kesu?
@@ -59,6 +68,10 @@ func (engine *DB) Get(key string) []byte {
 				entry_to_return = currently_read_entry
 			}
 		}
+	}
+
+	if entry_to_return == nil || entry_to_return.Tombstone {
+		return nil
 	}
 
 	if entry_to_return != nil {
