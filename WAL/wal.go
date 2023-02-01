@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/darkokos/NAiSP_Projekat/config"
 	"github.com/edsrzf/mmap-go"
 )
 
@@ -138,7 +139,7 @@ func (walEntry WALEntry) append() { //Dodavanje zapisa u aktuelni WAL fajl
 		panic(err)
 	}
 
-	if fileInfo.Size()+int64(len(ret)) > 80 { //Pravljenje novog WAL fajla u slucaju da je trenutni popunjen. Postavio sam broj bajtova na 80, sto je nasumicno odabran broj, posle ce taj broj biti zamenjen velicinom definisanom u konfiguracionom fajlu.
+	if uint64(fileInfo.Size())+uint64(len(ret)) > config.Configuration.WalSize { //Pravljenje novog WAL fajla u slucaju da je trenutni popunjen.
 		offset, err := strconv.Atoi(strings.Split(filename[:len(filename)-4], "_")[1])
 		if err != nil {
 			panic(err)
@@ -171,7 +172,7 @@ func (walEntry WALEntry) append() { //Dodavanje zapisa u aktuelni WAL fajl
 	copy(mmapFile[fileInfo.Size():], ret)
 }
 
-func ReadWAL() { //Citanje aktuelnog WAL fajla
+func ReadWAL() { //Citanje celog WAL-a
 	files, err := os.ReadDir("wal/")
 	if err != nil {
 		panic(err)
@@ -179,81 +180,83 @@ func ReadWAL() { //Citanje aktuelnog WAL fajla
 
 	filename := ""
 	if len(files) == 0 {
-		panic("Nema WAL-a")
+		panic("Nema WAL-a.")
 	} else {
-		filename = "wal/" + files[len(files)-1].Name()
-	}
+		for _, slicefile := range files {
+			filename = "wal/" + slicefile.Name()
 
-	file, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
+			file, err := os.Open(filename)
+			if err != nil {
+				panic(err)
+			}
+			defer file.Close()
 
-	for {
-		walEntry := new(WALEntry)
+			for {
+				walEntry := new(WALEntry)
 
-		b := make([]byte, CRC_SIZE)
-		_, err = file.Read(b)
-		if err != nil {
-			break
+				b := make([]byte, CRC_SIZE)
+				_, err = file.Read(b)
+				if err != nil {
+					break
+				}
+
+				walEntry.CRC = binary.BigEndian.Uint32(b)
+
+				b = make([]byte, TIMESTAMP_SIZE)
+				_, err = file.Read(b)
+				if err != nil {
+					panic(err)
+				}
+
+				walEntry.Timestamp = int64(binary.BigEndian.Uint64(b))
+
+				b = make([]byte, TOMBSTONE_SIZE)
+				_, err = file.Read(b)
+				if err != nil {
+					panic(err)
+				}
+
+				if b[0] == 1 {
+					walEntry.Tombstone = true
+				} else {
+					walEntry.Tombstone = false
+				}
+
+				b = make([]byte, KEY_SIZE_SIZE)
+				_, err = file.Read(b)
+				if err != nil {
+					panic(err)
+				}
+
+				walEntry.KeySize = binary.BigEndian.Uint64(b)
+
+				b = make([]byte, VALUE_SIZE_SIZE)
+				_, err = file.Read(b)
+				if err != nil {
+					panic(err)
+				}
+
+				walEntry.ValueSize = binary.BigEndian.Uint64(b)
+
+				b = make([]byte, walEntry.KeySize)
+				_, err = file.Read(b)
+				if err != nil {
+					panic(err)
+				}
+
+				walEntry.Key = b
+
+				b = make([]byte, walEntry.ValueSize)
+				_, err = file.Read(b)
+				if err != nil {
+					panic(err)
+				}
+
+				walEntry.Value = b
+
+				fmt.Println(*walEntry) //Za sad se svaki zapis samo ispisuje u konzoli, jer jos ne znam sta raditi sa njima
+			}
 		}
-
-		walEntry.CRC = binary.BigEndian.Uint32(b)
-
-		b = make([]byte, TIMESTAMP_SIZE)
-		_, err = file.Read(b)
-		if err != nil {
-			panic(err)
-		}
-
-		walEntry.Timestamp = int64(binary.BigEndian.Uint64(b))
-
-		b = make([]byte, TOMBSTONE_SIZE)
-		_, err = file.Read(b)
-		if err != nil {
-			panic(err)
-		}
-
-		if b[0] == 1 {
-			walEntry.Tombstone = true
-		} else {
-			walEntry.Tombstone = false
-		}
-
-		b = make([]byte, KEY_SIZE_SIZE)
-		_, err = file.Read(b)
-		if err != nil {
-			panic(err)
-		}
-
-		walEntry.KeySize = binary.BigEndian.Uint64(b)
-
-		b = make([]byte, VALUE_SIZE_SIZE)
-		_, err = file.Read(b)
-		if err != nil {
-			panic(err)
-		}
-
-		walEntry.ValueSize = binary.BigEndian.Uint64(b)
-
-		b = make([]byte, walEntry.KeySize)
-		_, err = file.Read(b)
-		if err != nil {
-			panic(err)
-		}
-
-		walEntry.Key = b
-
-		b = make([]byte, walEntry.ValueSize)
-		_, err = file.Read(b)
-		if err != nil {
-			panic(err)
-		}
-
-		walEntry.Value = b
-
-		fmt.Println(*walEntry) //Za sad se svaki zapis samo ispisuje u konzoli, jer jos ne znam sta raditi sa njima
 	}
 }
 
