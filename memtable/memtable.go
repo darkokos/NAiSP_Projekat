@@ -77,6 +77,7 @@ func (memTable *MemTable) Flush() {
 
 	memTableEntries := memTable.data.GetSortedEntries()
 
+	fmt.Println("Flush")
 	for _, entry := range memTableEntries {
 		fmt.Println("Kljuc: ", string(entry.Key), "Vrednost: ", entry.Value, "Timestamp:", entry.Timestamp, "Obrisan: ", entry.Tombstone)
 	}

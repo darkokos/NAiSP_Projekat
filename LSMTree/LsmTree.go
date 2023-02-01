@@ -11,16 +11,16 @@ import (
 
 // Pravi LSMTree sa memtabelom,maksimalnim nivoom i trenutnim najvecim nivoom
 type LogStructuredMergeTree struct {
-	memtable     memtable.MemTable
-	level        int
-	currentlevel int
+	Memtable     memtable.MemTable
+	Level        int
+	Currentlevel int
 }
 
 func NewLogStructuredMergeTree(capacity int) *LogStructuredMergeTree {
 	return &LogStructuredMergeTree{
-		memtable:     *memtable.MakeHashMapMemTable(capacity),
-		level:        int(config.Configuration.LSMTreeLevels),
-		currentlevel: findlevel(),
+		Memtable:     *memtable.MakeHashMapMemTable(capacity),
+		Level:        int(config.Configuration.LSMTreeLevels),
+		Currentlevel: findlevel(),
 	}
 
 }
@@ -40,7 +40,7 @@ func findlevel() int {
 // Trazi u memtable, ako ne nadje trazi u ss tabelama
 func (lsmt *LogStructuredMergeTree) Get(key []byte) (string, bool) { //trazi prvo u memtable, ako nije tamo prolazi kroz svaki sstable
 
-	if value, ok := lsmt.memtable.Get(string(key)); ok {
+	if value, ok := lsmt.Memtable.Get(string(key)); ok {
 		return string(value), true
 	} else {
 		return lsmt.FindInSSTable(key)
@@ -51,7 +51,7 @@ func (lsmt *LogStructuredMergeTree) Get(key []byte) (string, bool) { //trazi prv
 // Trazi kljuc u svim SS tabelama
 func (lsmt *LogStructuredMergeTree) FindInSSTable(key []byte) (string, bool) {
 	i := 1
-	for i <= lsmt.currentlevel {
+	for i <= lsmt.Currentlevel {
 		levelstr := ""
 		if i < 10 {
 			levelstr = "0" + fmt.Sprint(i)

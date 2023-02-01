@@ -86,7 +86,7 @@ func CreateWALEntry(tombstone bool, key, value []byte) WALEntry { //Pravljenje n
 	return WALEntry{CRC: crc.Sum32(), Timestamp: timestamp, Tombstone: tombstone, KeySize: keySize, ValueSize: valueSize, Key: key, Value: value}
 }
 
-func (walEntry WALEntry) append() { //Dodavanje zapisa u aktuelni WAL fajl
+func (walEntry WALEntry) Append() { //Dodavanje zapisa u aktuelni WAL fajl
 	files, err := ioutil.ReadDir("wal/")
 	if err != nil {
 		panic(err)
@@ -99,7 +99,7 @@ func (walEntry WALEntry) append() { //Dodavanje zapisa u aktuelni WAL fajl
 		filename = "wal/" + files[len(files)-1].Name()
 	}
 
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND, 0222)
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		panic(err)
 	}
