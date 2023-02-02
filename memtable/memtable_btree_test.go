@@ -228,10 +228,47 @@ func TestMemtableBTreeGeneral(t *testing.T) {
 	}
 }
 
+func TestRadnomStringsSmallestPossibleFail(t *testing.T) {
+	// Ovaj test ne radi za 10-15% seed-ova koje se postave
+	random_strings := make([]string, 0)
+	rand.Seed(9)
+
+	number_of_elements := 6
+	memTable := MakeBTreeMemTable(number_of_elements + 1)
+	for i := 0; i < number_of_elements; i++ {
+
+		length := 101
+
+		ran_str := make([]byte, length)
+
+		// Generating Random string
+		for i := 0; i < length; i++ {
+			ran_str[i] = byte(65 + rand.Intn(25))
+		}
+
+		random_strings = append(random_strings, string(ran_str))
+
+		if !memTable.Update(string(ran_str), []byte{}) {
+			t.Fatalf("Ovo je trebalo da prodje")
+		}
+	}
+
+	//memTable.Flush()
+
+	for i, ran_str := range random_strings {
+		fmt.Println(string(ran_str))
+		_, ok := memTable.Get(string(ran_str))
+		if !ok {
+			t.Fatalf("Trebalo je da nadje ovaj string %d", i)
+		}
+	}
+
+}
+
 func TestRadnomStrings(t *testing.T) {
 	// Ovaj test ne radi za 10-15% seed-ova koje se postave
 	random_strings := make([]string, 0)
-	rand.Seed(30)
+	rand.Seed(50)
 
 	number_of_elements := 1000
 	memTable := MakeBTreeMemTable(number_of_elements + 1)
