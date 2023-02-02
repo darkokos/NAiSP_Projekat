@@ -9,6 +9,9 @@ import (
 	"github.com/darkokos/NAiSP_Projekat/sstable"
 )
 
+// Dobavlja vrednost za prosledjeni kljuc iz baze podataka.
+// Vraca vrednost koja je dodelejena tom kljucu ako postoji u bazi ili nil
+// ako zapis sa prosledjenim kljucem ne postoji.
 func (engine *DB) Get(key string) []byte {
 	key_bytes := []byte(key)
 	//val, ok := engine.lsm_tree.Get(key_bytes)
@@ -74,7 +77,8 @@ func (engine *DB) Get(key string) []byte {
 		return nil
 	}
 
-	if entry_to_return != nil {
+	// Vracamo samo entry-e koji nisu obrisani
+	if entry_to_return != nil && !entry_to_return.Tombstone {
 		engine.cache.Add(entry_to_return.Key, entry_to_return.Value)
 		return entry_to_return.Value
 	} else {

@@ -1,34 +1,19 @@
 package engine
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/darkokos/NAiSP_Projekat/config"
 )
 
 func TestEngineSimple(t *testing.T) {
 	// Brisanje fajlova od proslih testova
-	// Brisemo sve fajlove sa imenima oblika *.db
-	files, err := filepath.Glob("*.db")
-	if err != nil {
-		panic(err)
-	}
-	for _, f := range files {
-		if err := os.Remove(f); err != nil {
-			panic(err)
-		}
-	}
-
-	files, err = filepath.Glob("*.txt")
-	if err != nil {
-		panic(err)
-	}
-	for _, f := range files {
-		if err := os.Remove(f); err != nil {
-			panic(err)
-		}
-	}
+	Cleanup()
 
 	db := GetNewDB()
 
@@ -63,26 +48,7 @@ func TestEngineSimple(t *testing.T) {
 
 func TestEngineWithDeletions(t *testing.T) {
 	// Brisanje fajlova od proslih testova
-	// Brisemo sve fajlove sa imenima oblika *.db
-	files, err := filepath.Glob("*.db")
-	if err != nil {
-		panic(err)
-	}
-	for _, f := range files {
-		if err := os.Remove(f); err != nil {
-			panic(err)
-		}
-	}
-
-	files, err = filepath.Glob("*.txt")
-	if err != nil {
-		panic(err)
-	}
-	for _, f := range files {
-		if err := os.Remove(f); err != nil {
-			panic(err)
-		}
-	}
+	Cleanup()
 
 	db := GetNewDB()
 	db.Put("102", []byte{102})
@@ -112,26 +78,7 @@ func TestEngineWithDeletions(t *testing.T) {
 
 func TestForStaleCache(t *testing.T) {
 	// Brisanje fajlova od proslih testova
-	// Brisemo sve fajlove sa imenima oblika *.db
-	files, err := filepath.Glob("*.db")
-	if err != nil {
-		panic(err)
-	}
-	for _, f := range files {
-		if err := os.Remove(f); err != nil {
-			panic(err)
-		}
-	}
-
-	files, err = filepath.Glob("*.txt")
-	if err != nil {
-		panic(err)
-	}
-	for _, f := range files {
-		if err := os.Remove(f); err != nil {
-			panic(err)
-		}
-	}
+	Cleanup()
 
 	db := GetNewDB()
 	db.Put("101", []byte{101})
@@ -173,4 +120,119 @@ func TestForStaleCache(t *testing.T) {
 		t.Fatalf("Nije trebalo je ovo da nadje")
 	}
 
+}
+
+func TestWALReplayMemTableOnly(t *testing.T) {
+	Cleanup()
+
+	db := GetNewDB()
+
+	// 3 zapisa se nece flush-ovati
+	if !db.Put("101", []byte{101}) {
+		t.Fatalf("Ovo je trebalo da prodje")
+	}
+	if !db.Put("102", []byte{102}) {
+		t.Fatalf("Ovo je trebalo da prodje")
+	}
+	if !db.Delete("101") {
+		t.Fatalf("Ovo je treblo da prodje")
+	}
+
+	if !db.Put("103", []byte{103}) {
+		t.Fatalf("Ovo je trebalo da prodje")
+	}
+
+	// Simulacija restarta sistema
+	db = GetNewDB()
+
+	if db.Get("101") != nil {
+		t.Fatalf("Ovaj kluc je bio obrisan")
+	}
+
+	val := db.Get("102")
+	if val == nil {
+		t.Fatalf("Ovaj kluc bi trebalo da je prisutan")
+	} else if val[0] != 102 {
+		t.Fatalf("Nije dobro procitana vrednost")
+	}
+
+	val = db.Get("103")
+	if val == nil {
+		t.Fatalf("Ovaj kluc bi trebalo da je prisutan")
+	} else if val[0] != 103 {
+		t.Fatalf("Nije dobro procitana vrednost")
+	}
+
+}
+
+func TestWALReplayWithALotOfData(t *testing.T) {
+	Cleanup()
+
+	config.DefaultConfiguration.WalSize = 1000    // Smanjemo velicinu wal segmenta da bi ih bilo vise
+	config.DefaultConfiguration.MemtableSize = 50 // Da ubrza stvari
+	db := GetNewDB()
+
+	// Dodajemo 10000 brojeva, ali uvek brisemo prethodni parni ako mozemo
+	for i := uint64(0); i < 1000; i++ {
+		bytes_to_write := bytes.NewBuffer(make([]byte, 0))
+		err := binary.Write(bytes_to_write, binary.LittleEndian, i)
+		if err != nil {
+			t.Fatalf("Ovo nije trebalo da se desi")
+		}
+		if !db.Put(fmt.Sprintf("%04d", i), bytes_to_write.Bytes()) {
+			t.Fatalf("Ovo je trebalo da prodje")
+		}
+
+		if i >= 2 && i%2 == 0 {
+			if !db.Delete(fmt.Sprintf("%04d", i-2)) {
+				t.Fatalf("Ovo je trebalo da prodje")
+			}
+		}
+	}
+
+	// Brisemo SSTabele da ih read path ne bi pokupio
+	DeleteSSTables()
+	//Simulacija restarta sistema
+	db = GetNewDB()
+
+	// Moramo izostaviti 9998 jer on nece biti obrisan
+	for i := uint64(0); i < 998; i++ {
+		val := db.Get(fmt.Sprintf("%04d", i))
+
+		if val != nil && i%2 == 0 {
+			t.Fatalf("Parni brojevi su bili obrisnani")
+		} else if val == nil && i%2 == 1 {
+			t.Fatalf("Neparni brojevi bi treblo da su tu")
+		}
+	}
+}
+
+func Cleanup() {
+
+	// Brisanje fajlova od proslih testova
+	os.RemoveAll("wal")
+	DeleteSSTables()
+}
+
+func DeleteSSTables() {
+	// Brisemo sve SSTabele
+	files, err := filepath.Glob("*.db")
+	if err != nil {
+		panic(err)
+	}
+	for _, f := range files {
+		if err := os.Remove(f); err != nil {
+			panic(err)
+		}
+	}
+
+	files, err = filepath.Glob("*.txt")
+	if err != nil {
+		panic(err)
+	}
+	for _, f := range files {
+		if err := os.Remove(f); err != nil {
+			panic(err)
+		}
+	}
 }

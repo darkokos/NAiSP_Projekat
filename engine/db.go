@@ -20,5 +20,9 @@ func GetNewDB() *DB {
 
 	db := DB{cache: cache, memtable: *memtable.MakeMemTableFromConfig()}
 
+	// Ponavlajmo sve operacije iz WAL-a
+	db.CreateWalDirIfDoesNotExist()
+	db.ReplayWal()
+
 	return &db
 }
