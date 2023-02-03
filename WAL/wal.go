@@ -304,7 +304,7 @@ func DeleteSegments() {
 		}
 
 		if offset >= LOW_WATER_MARK { //Ponovno postavljanje offset-a svakog sledeceg log-a nakon onog definisanog low-water mark-om
-			err = os.Rename("wal/"+filename, "wal/wal_"+strconv.Itoa(new_offset)+".log")
+			err = os.Rename("wal/"+filename, "wal/wal_"+fmt.Sprintf("%04d", new_offset)+".log")
 			if err != nil {
 				panic(err)
 			}

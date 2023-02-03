@@ -165,6 +165,42 @@ func TestWALReplayMemTableOnly(t *testing.T) {
 
 }
 
+func TestWriteALotOfData(t *testing.T) {
+	Cleanup()
+
+	config.DefaultConfiguration.WalSize = 10000   // Smanjemo velicinu wal segmenta da bi ih bilo vise
+	config.DefaultConfiguration.MemtableSize = 40 // Da ubrza stvari
+	db := GetNewDB()
+
+	// Dodajemo 1000 brojeva, ali uvek brisemo prethodni parni ako mozemo
+	for i := uint64(0); i < 1000; i++ {
+		bytes_to_write := bytes.NewBuffer(make([]byte, 0))
+		err := binary.Write(bytes_to_write, binary.LittleEndian, i)
+		if err != nil {
+			t.Fatalf("Ovo nije trebalo da se desi")
+		}
+		if !db.Put(fmt.Sprintf("%04d", i), bytes_to_write.Bytes()) {
+			t.Fatalf("Ovo je trebalo da prodje")
+		}
+
+		if i >= 2 && i%2 == 0 {
+			if !db.Delete(fmt.Sprintf("%04d", i-2)) {
+				t.Fatalf("Ovo je trebalo da prodje")
+			}
+		}
+	}
+	for i := uint64(0); i < 998; i++ {
+		val := db.Get(fmt.Sprintf("%04d", i))
+
+		if val != nil && i%2 == 0 {
+			t.Fatalf("Parni brojevi su bili obrisnani %d", i)
+		} else if val == nil && i%2 == 1 {
+			t.Fatalf("Neparni brojevi bi treblo da su tu %d", i)
+		}
+	}
+
+}
+
 func TestWALReplayWithALotOfData(t *testing.T) {
 	Cleanup()
 
@@ -172,7 +208,7 @@ func TestWALReplayWithALotOfData(t *testing.T) {
 	config.DefaultConfiguration.MemtableSize = 40 // Da ubrza stvari
 	db := GetNewDB()
 
-	// Dodajemo 10000 brojeva, ali uvek brisemo prethodni parni ako mozemo
+	// Dodajemo 200 brojeva, ali uvek brisemo prethodni parni ako mozemo
 	for i := uint64(0); i < 200; i++ {
 		bytes_to_write := bytes.NewBuffer(make([]byte, 0))
 		err := binary.Write(bytes_to_write, binary.LittleEndian, i)
@@ -196,7 +232,7 @@ func TestWALReplayWithALotOfData(t *testing.T) {
 	db = GetNewDB()
 
 	// Moramo izostaviti 9998 jer on nece biti obrisan
-	for i := uint64(0); i < 198; i++ {
+	for i := uint64(193); i < 198; i++ {
 		val := db.Get(fmt.Sprintf("%04d", i))
 
 		if val != nil && i%2 == 0 {

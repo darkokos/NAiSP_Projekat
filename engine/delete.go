@@ -17,6 +17,7 @@ func (engine *DB) Delete(key string) bool {
 	ok := engine.memtable.Delete(key)
 	if ok {
 		engine.cache.Edit([]byte(key), nil) // Moramo ukloniti element iz kesa - prevencija zastarelog kesa
+		wal.DeleteSegments()
 		return true
 	} else {
 		return false

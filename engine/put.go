@@ -14,6 +14,7 @@ func (engine *DB) Put(key string, value []byte) bool {
 		return false
 	} else {
 		engine.cache.Edit(key_bytes, value) // Prevencija zastarelog kesa
+		wal.DeleteSegments()
 		return engine.memtable.Update(key, value)
 	}
 
