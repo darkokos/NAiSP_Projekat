@@ -68,7 +68,7 @@ func getBeginEndKeysAndFooterOffset(summary_file *os.File) (begin_key []byte, en
 // Konstruise SummaryIterator za Summary fajl SSTabele koja je zapisana u vise fajlova.
 // Vraca konstruisani iterator.
 // Vraca nil ako je doslo do greske.
-func getSummaryIteratorFromFile(filename string) *SummaryIterator {
+func GetSummaryIteratorFromFile(filename string) *SummaryIterator {
 	summary_file, err := os.Open(filename)
 
 	if err != nil {
@@ -101,7 +101,7 @@ func getSummaryIteratorFromFile(filename string) *SummaryIterator {
 // Konstruise SummaryIterator za SSTabelu koju je zapisana kao jedan fajl.
 // Vraca konstruisani iterator.
 // Vraca nil ako je doslo do greske.
-func getSummaryIteratorFromSSTableFile(filename string) *SummaryIterator {
+func GetSummaryIteratorFromSSTableFile(filename string) *SummaryIterator {
 	//TODO: Summary iterator iz sst fajla
 
 	sstFile, err := os.Open(filename)
