@@ -46,7 +46,7 @@ func Test(t *testing.T) {
 	//fmt.Print(tr.GetValue([]byte{2, 3}))
 	//tr.AddKey([]byte{1, 2})
 	fmt.Println()
-	fmt.Println("Citanje 1-9 (ima jedna modifikovana 11 tamo gde treba da bude 8):", tr.GetValuesSortedByKey())
+	fmt.Println("Citanje 1-9:", tr.GetValuesSortedByKey())
 	fmt.Println()
 	fmt.Print("TESTING")
 }

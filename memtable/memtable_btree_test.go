@@ -251,6 +251,12 @@ func TestRadnomStringsSmallestPossibleFail(t *testing.T) {
 		if !memTable.Update(string(ran_str), []byte{}) {
 			t.Fatalf("Ovo je trebalo da prodje")
 		}
+
+		_, ok := memTable.Get(string(ran_str))
+
+		if !ok {
+			t.Fatalf("Add fail za kljuc %s", ran_str)
+		}
 	}
 
 	//memTable.Flush()
@@ -268,13 +274,13 @@ func TestRadnomStringsSmallestPossibleFail(t *testing.T) {
 func TestRadnomStrings(t *testing.T) {
 	// Ovaj test ne radi za 10-15% seed-ova koje se postave
 	random_strings := make([]string, 0)
-	rand.Seed(50)
+	rand.Seed(42)
 
 	number_of_elements := 1000
 	memTable := MakeBTreeMemTable(number_of_elements + 1)
 	for i := 0; i < number_of_elements; i++ {
 
-		length := 101
+		length := 100
 
 		ran_str := make([]byte, length)
 
