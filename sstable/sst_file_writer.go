@@ -10,6 +10,12 @@ import (
 	"github.com/darkokos/NAiSP_Projekat/merkleTree"
 )
 
+const (
+	SSTABLE_MAGIC_NUMBER_SIZE         = 8                          // Velicina magicnog broja u bajtovima
+	SSTABLE_MULTI_FILE_MAGIC_NUMBER   = uint64(0x473700DD14E7F08B) // Magicni broj za SSTabelu u rezimu gde je jedna SSTabele sacinjena iz vise fajlova
+	SSTABALE_SINGLE_FILE_MAGIC_NUMBER = uint64(0xE14695378B12D2F8) // Magicni broj za SSTabelu u rezimu gde je su svi elementi SSTabele u jednom fajlu
+)
+
 // Sturkutra koja omogucava pisanje SSTable-a zapis po zapis
 // Ocekivana upotreba:
 // writer := GetSSTableFileWriter(true/false)
@@ -190,6 +196,10 @@ func (writer *SSTFileWriter) CloseFiles() {
 // Pise pomocne strukture na odgovarajuca mesta i zatvara fajlove.
 // Ako dodje do greske atribut Ok ce biti postavljen na false.
 func (writer *SSTFileWriter) Finish() {
+	if writer.records_written == 0 {
+		writer.CloseFiles()
+		return
+	}
 	summary_density := 128 //TODO: I ovde zameniti summary_density
 
 	endOfData, err := writer.sstFile.Seek(0, io.SeekCurrent)

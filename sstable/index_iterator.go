@@ -17,7 +17,7 @@ type IndexIterator struct {
 
 // Pravi IndexIterator koji iterira kroz indeks koji je realizovan kao zaseban fajl
 // Ako je doslo do greske u otvaranju fajla vraca nil
-func getIndexIteratorFromIndexFile(filename string) *IndexIterator {
+func GetIndexIteratorFromIndexFile(filename string) *IndexIterator {
 	indexFile, err := os.Open(filename)
 	if err != nil {
 		return nil
@@ -36,7 +36,7 @@ func getIndexIteratorFromIndexFile(filename string) *IndexIterator {
 
 // Pravi IndexIterator koji iterira kroz indeks koji je u okviru SSTabele
 // koja je zapisana kao jedan fajl
-func getIndexIteratorFromSSTableFile(filename string) *IndexIterator {
+func GetIndexIteratorFromSSTableFile(filename string) *IndexIterator {
 	sstFile, err := os.Open(filename)
 	if err != nil {
 		sstFile.Close()

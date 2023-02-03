@@ -47,7 +47,13 @@ func (list *Dll) Pop(n int) DllElement {
 		cursor = *cursor.next
 	}
 	(*cursor.prev).next = cursor.next
-	(*cursor.next).prev = cursor.prev
+
+	if cursor.next != nil {
+		// cursor.next je nil ako je pop-ujemo poslednji element
+		// Onda ne postoji cvor posle onog kog pop-ujemo pa
+		// njega ne treba tad prevezivati
+		(*cursor.next).prev = cursor.prev
+	}
 
 	cursor.next = nil //Common sense da bi se izbegle duplirane reference, verovatno nije neophodno
 	cursor.prev = nil
@@ -72,6 +78,15 @@ func (list *Dll) PushNode(el DllElement) {
 	if (*list).IsFull() {
 		(*list).DeleteLast()
 	}
+
+	// Edge case ako je lista prazna
+	if list.size == 0 {
+		list.head = &el
+		list.tail = &el
+		list.size++
+		return
+	}
+
 	(*list).size++
 	(*list.head).prev = &el
 	el.next = (*list).head
@@ -92,4 +107,13 @@ func (list *Dll) DeleteLast() {
 }
 func (list *Dll) GetLast() []byte {
 	return (*list.tail).data
+}
+
+// Funkcija menja vrednost elementa na poziciji n
+// Radi isto sto i Get, ali ne vraca isti element u niz nego ga prvo promeni
+// i ne vraca nikakvu vrednost
+func (list *Dll) Edit(n int, new_value []byte) {
+	e := (*list).Pop(n)
+	e.data = new_value
+	(*list).PushNode(e)
 }

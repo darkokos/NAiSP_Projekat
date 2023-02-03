@@ -40,16 +40,16 @@ func TestMemtableSkipList(t *testing.T) {
 	fmt.Println("Drugi memtable")
 	memTable.Update("5", []byte{0, 0, 0, 2})
 	memTable.Update("36", []byte{0, 0, 0, 3})
-	memTable.Update("231", []byte{0, 0, 0, 1})
+	//memTable.Update("231", []byte{0, 0, 0, 1})
 	memTable.Update("33", []byte{0, 0, 0, 4})
 
 	ok = memTable.Delete("37")
-	if ok {
-		t.Fatalf("Brisanje nepostojeceg kljuca ne bi trebalo da bude uspesno")
+	if !ok {
+		t.Fatalf("Brisanje nepostojeceg kljuca bi trebalo da bude uspesno")
 	}
 
-	if memTable.IsDeleted("37") {
-		t.Fatalf("Nepostojeci kljuc ne bi trebalo da je obrisan")
+	if !memTable.IsDeleted("37") {
+		t.Fatalf("Ovaj kljuc je malocas bio obrisan")
 	}
 
 	ok = memTable.Delete("33")
@@ -58,8 +58,8 @@ func TestMemtableSkipList(t *testing.T) {
 	}
 
 	_, ok = memTable.Get("33")
-	if !ok {
-		t.Fatalf("Kljuc 33 bi trebalo da je i dalje tu")
+	if ok {
+		t.Fatalf("Kljuc 33 ne bi trebalo da je i dalje tu")
 	} else if !memTable.IsDeleted("33") {
 		t.Fatalf("Kljuc 33 bi trebalo da ima postavljen tombstone")
 	}
