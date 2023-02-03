@@ -200,5 +200,4 @@ func Test100000RandomStrings(t *testing.T) {
 			t.Fatalf("Nije trebalo da nadje kljuc %s", ran_str)
 		}
 	}
-
 }
