@@ -1,8 +1,9 @@
 package sstable
 
 import (
+	"time"
+
 	wal "github.com/darkokos/NAiSP_Projekat/WAL"
-	"github.com/darkokos/NAiSP_Projekat/memtable"
 )
 
 // Format SSTable i WAL-a su isti
@@ -10,7 +11,7 @@ type SSTableEntry wal.WALEntry
 
 // Pravi SSTable zapis od MemTable zapisa
 // Prakticno receno: wrapper za racunanje CRC-a
-func CreateSSTableEntryFromMemTableEntry(memtableEntry *memtable.MemTableEntry) *SSTableEntry {
+/*func CreateSSTableEntryFromMemTableEntry(memtableEntry *memtable.MemTableEntry) *SSTableEntry {
 
 	entry := SSTableEntry{
 		CRC:       CalculateCRC(memtableEntry.Timestamp, memtableEntry.Tombstone, uint64(len(memtableEntry.Key)), uint64(len(memtableEntry.Value)), memtableEntry.Key, memtableEntry.Value),
@@ -19,6 +20,39 @@ func CreateSSTableEntryFromMemTableEntry(memtableEntry *memtable.MemTableEntry) 
 		ValueSize: uint64(len(memtableEntry.Value)),
 		Key:       memtableEntry.Key,
 		Value:     memtableEntry.Value,
+	}
+
+	return &entry
+}*/
+
+// Funkcija pravi SSTable entry od polja koja ce biti u njemu
+func CreateSSTableEntry(key []byte, value []byte, timestamp int64, tombstone bool) *SSTableEntry {
+
+	entry := SSTableEntry{
+		CRC:       CalculateCRC(timestamp, tombstone, uint64(len(key)), uint64(len(value)), key, value),
+		Timestamp: timestamp,
+		KeySize:   uint64(len(key)),
+		ValueSize: uint64(len(value)),
+		Key:       key,
+		Value:     value,
+		Tombstone: tombstone,
+	}
+
+	return &entry
+}
+
+// Funkcija pravi SSTableEntry sa kljucem key i vrednoscu value, timestamp-om sa trenutnim vremenom i tombstone-om false
+func CreateFreshSSTableEntry(key []byte, value []byte) *SSTableEntry {
+	timestamp := time.Now().UnixNano()
+	tombstone := false
+	entry := SSTableEntry{
+		CRC:       CalculateCRC(timestamp, tombstone, uint64(len(key)), uint64(len(value)), key, value),
+		Timestamp: timestamp,
+		KeySize:   uint64(len(key)),
+		ValueSize: uint64(len(value)),
+		Key:       key,
+		Value:     value,
+		Tombstone: tombstone,
 	}
 
 	return &entry

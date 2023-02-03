@@ -115,14 +115,14 @@ func ReadOneSSTEntryWithKey(key []byte, sstFileName string, indexFilename string
 	filter := &bloomfilter.BloomFilter{}
 
 	if indexFilename != "" {
-		summaryIterator = getSummaryIteratorFromFile(summaryFilename)
-		indexIterator = getIndexIteratorFromIndexFile(indexFilename)
+		summaryIterator = GetSummaryIteratorFromFile(summaryFilename)
+		indexIterator = GetIndexIteratorFromIndexFile(indexFilename)
 		sstableIterator = GetSSTableIterator(sstFileName)
 		filter = ReadFilterAsSeparateFile(filterFilename)
 
 	} else {
-		summaryIterator = getSummaryIteratorFromSSTableFile(sstFileName)
-		indexIterator = getIndexIteratorFromSSTableFile(sstFileName)
+		summaryIterator = GetSummaryIteratorFromSSTableFile(sstFileName)
+		indexIterator = GetIndexIteratorFromSSTableFile(sstFileName)
 		sstableIterator = GetSSTableIterator(sstFileName)
 		filter = ReadFilterFromSSTFile(sstFileName)
 	}

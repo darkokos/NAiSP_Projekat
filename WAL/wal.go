@@ -83,7 +83,7 @@ func CreateWALEntry(tombstone bool, key, value []byte) WALEntry { //Pravljenje n
 	return WALEntry{CRC: crc.Sum32(), Timestamp: timestamp, Tombstone: tombstone, KeySize: keySize, ValueSize: valueSize, Key: key, Value: value}
 }
 
-func (walEntry WALEntry) append() { //Dodavanje zapisa u aktuelni WAL fajl
+func (walEntry WALEntry) Append() { //Dodavanje zapisa u aktuelni WAL fajl
 	files, err := os.ReadDir("wal/")
 	if err != nil {
 		panic(err)
@@ -91,7 +91,7 @@ func (walEntry WALEntry) append() { //Dodavanje zapisa u aktuelni WAL fajl
 
 	filename := ""
 	if len(files) == 0 {
-		filename = "wal/wal_1.log"
+		filename = "wal/wal_0001.log"
 	} else {
 		filename = "wal/" + files[len(files)-1].Name()
 	}
@@ -140,12 +140,15 @@ func (walEntry WALEntry) append() { //Dodavanje zapisa u aktuelni WAL fajl
 	}
 
 	if uint64(fileInfo.Size())+uint64(len(ret)) > config.Configuration.WalSize { //Pravljenje novog WAL fajla u slucaju da je trenutni popunjen.
-		offset, err := strconv.Atoi(strings.Split(filename[:len(filename)-4], "_")[1])
+
+		offset, err := strconv.Atoi(strings.Split(filename[:len(filename)-4], "_")[1]) // Ovo cita samo jednu cifrue
 		if err != nil {
 			panic(err)
 		}
 
-		filename = "wal/wal_" + strconv.Itoa(offset+1) + ".log"
+		// Ako su nazivi wal fajlova formata wal_broj.log onda ce wal_10 biti pre wal_9 i posle desetog
+		// segmenta ce se otvarati pogresan fajl kad se pozove filename = "wal/" + files[len(files)-1].Name()
+		filename = "wal/wal_" + fmt.Sprintf("%04d", offset+1) + ".log"
 		file, err = os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0777)
 		if err != nil {
 			panic(err)
@@ -172,22 +175,28 @@ func (walEntry WALEntry) append() { //Dodavanje zapisa u aktuelni WAL fajl
 	copy(mmapFile[fileInfo.Size():], ret)
 }
 
-func ReadWAL() { //Citanje celog WAL-a
+func ReadWAL() []*WALEntry { //Citanje celog WAL-a
+
+	walEntries := make([]*WALEntry, 0)
 	files, err := os.ReadDir("wal/")
 	if err != nil {
-		panic(err)
+		fmt.Println("Nije uspelo citanje wal direktorijuma")
+		return walEntries
 	}
 
 	filename := ""
 	if len(files) == 0 {
-		panic("Nema WAL-a.")
+		fmt.Println("Nema WAL fajlova u wal direkotrijumu")
+		return walEntries
 	} else {
 		for _, slicefile := range files {
 			filename = "wal/" + slicefile.Name()
 
 			file, err := os.Open(filename)
 			if err != nil {
-				panic(err)
+				fmt.Println("Nije uspelo otvaranje wal fajla")
+				continue
+				//return walEntries Mozda ipak mozemo da procitamo sledeci fajl
 			}
 			defer file.Close()
 
@@ -205,7 +214,8 @@ func ReadWAL() { //Citanje celog WAL-a
 				b = make([]byte, TIMESTAMP_SIZE)
 				_, err = file.Read(b)
 				if err != nil {
-					panic(err)
+					fmt.Println("Greska u citanju wal fajla")
+					return walEntries // Vracamo sta smo do sad procitali
 				}
 
 				walEntry.Timestamp = int64(binary.BigEndian.Uint64(b))
@@ -213,7 +223,8 @@ func ReadWAL() { //Citanje celog WAL-a
 				b = make([]byte, TOMBSTONE_SIZE)
 				_, err = file.Read(b)
 				if err != nil {
-					panic(err)
+					fmt.Println("Greska u citanju wal fajla")
+					return walEntries // Vracamo sta smo do sad procitali
 				}
 
 				if b[0] == 1 {
@@ -225,7 +236,8 @@ func ReadWAL() { //Citanje celog WAL-a
 				b = make([]byte, KEY_SIZE_SIZE)
 				_, err = file.Read(b)
 				if err != nil {
-					panic(err)
+					fmt.Println("Greska u citanju wal fajla")
+					return walEntries // Vracamo sta smo do sad procitali
 				}
 
 				walEntry.KeySize = binary.BigEndian.Uint64(b)
@@ -233,7 +245,8 @@ func ReadWAL() { //Citanje celog WAL-a
 				b = make([]byte, VALUE_SIZE_SIZE)
 				_, err = file.Read(b)
 				if err != nil {
-					panic(err)
+					fmt.Println("Greska u citanju wal fajla")
+					return walEntries // Vracamo sta smo do sad procitalipanic(err)
 				}
 
 				walEntry.ValueSize = binary.BigEndian.Uint64(b)
@@ -241,7 +254,8 @@ func ReadWAL() { //Citanje celog WAL-a
 				b = make([]byte, walEntry.KeySize)
 				_, err = file.Read(b)
 				if err != nil {
-					panic(err)
+					fmt.Println("Greska u citanju wal fajla")
+					return walEntries // Vracamo sta smo do sad procitalipanic(err)
 				}
 
 				walEntry.Key = b
@@ -249,15 +263,19 @@ func ReadWAL() { //Citanje celog WAL-a
 				b = make([]byte, walEntry.ValueSize)
 				_, err = file.Read(b)
 				if err != nil {
-					panic(err)
+					fmt.Println("Greska u citanju wal fajla")
+					return walEntries // Vracamo sta smo do sad procitalipanic(err)
 				}
 
 				walEntry.Value = b
 
-				fmt.Println(*walEntry) //Za sad se svaki zapis samo ispisuje u konzoli, jer jos ne znam sta raditi sa njima
+				walEntries = append(walEntries, walEntry)
+				//fmt.Println(*walEntry) //Za sad se svaki zapis samo ispisuje u konzoli, jer jos ne znam sta raditi sa njima
 			}
 		}
 	}
+
+	return walEntries
 }
 
 func DeleteSegments() {
@@ -286,7 +304,7 @@ func DeleteSegments() {
 		}
 
 		if offset >= LOW_WATER_MARK { //Ponovno postavljanje offset-a svakog sledeceg log-a nakon onog definisanog low-water mark-om
-			err = os.Rename("wal/"+filename, "wal/wal_"+strconv.Itoa(new_offset)+".log")
+			err = os.Rename("wal/"+filename, "wal/wal_"+fmt.Sprintf("%04d", new_offset)+".log")
 			if err != nil {
 				panic(err)
 			}

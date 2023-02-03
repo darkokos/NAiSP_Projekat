@@ -67,8 +67,11 @@ func (btreeInternal *BTreeInternal) GetSortedEntries() []*MemTableEntry {
 }
 
 // Logicki brise element iz strukture time sto postavlja tombstone na true
-// ako taj element postoji i vraca true.
-// Ako ne postoji ne radi nista i vraca false.
+// ako taj element postoji i vraca true. Takodje se vrednost postavlja na
+// prazan niz.
+// Ako postoji element sa tim kljucem i tombstone-om postavljenim na true, ne radi nista i vraca false.
+// Ako ne postoji dodaje MemTable entry sa prosledjenim kljucem, praznim nizom
+// kao vrednoscu i tombstone-om postavljenim na true.
 func (btreeInternal *BTreeInternal) Delete(key string) bool {
 	ok, v := btreeInternal.data.GetValue([]byte(key))
 
@@ -82,13 +85,19 @@ func (btreeInternal *BTreeInternal) Delete(key string) bool {
 			}
 
 			entry.Tombstone = true
+			entry.Value = []byte{}
 			btreeInternal.data.ModifyKey(entry.Key, memTableEntryToBytes(entry))
 			return true
 		} else {
+			// Greska u konverzija MemTableEntry-Byte
 			return false
 		}
 	} else {
-		return false
+		entry := CreateEntry([]byte(key), []byte{})
+		entry.Tombstone = true
+		btreeInternal.data.AddKey([]byte(key), memTableEntryToBytes(entry))
+		btreeInternal.size++ // Dodali smo element u b stablo
+		return true
 	}
 }
 

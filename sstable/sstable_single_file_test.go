@@ -8,22 +8,26 @@ import (
 	"os"
 	"testing"
 	"time"
-
-	"github.com/darkokos/NAiSP_Projekat/memtable"
 )
 
 func TestSSTableSingleFile(t *testing.T) {
 	fmt.Println("Kompajliralo se")
 
-	sorted_entries := make([]*memtable.MemTableEntry, 0)
+	sorted_entries := make([]*SSTableEntry, 0)
+	sorted_entries = append(sorted_entries, CreateFreshSSTableEntry([]byte("Darko"), []byte{'S', 'V', 50, 21}))
+	sorted_entries = append(sorted_entries, CreateFreshSSTableEntry([]byte("Gojko"), []byte{49, 21}))
+	sorted_entries = append(sorted_entries, CreateFreshSSTableEntry([]byte("Marko"), []byte("SV 38/2021")))
+	sorted_entries = append(sorted_entries, CreateFreshSSTableEntry([]byte("Momir"), []byte{39, 21, 1, 2, 3}))
+	sorted_entries = append(sorted_entries, CreateFreshSSTableEntry([]byte("Vuk"), []byte{52, 21}))
 
-	sorted_entries = append(sorted_entries, memtable.CreateEntry([]byte("Darko"), []byte{'S', 'V', 50, 21}))
-	sorted_entries = append(sorted_entries, memtable.CreateEntry([]byte("Gojko"), []byte{49, 21}))
-	sorted_entries = append(sorted_entries, memtable.CreateEntry([]byte("Marko"), []byte("SV 38/2021")))
-	sorted_entries = append(sorted_entries, memtable.CreateEntry([]byte("Momir"), []byte{39, 21, 1, 2, 3}))
-	sorted_entries = append(sorted_entries, memtable.CreateEntry([]byte("Vuk"), []byte{52, 21}))
+	sstWriter := GetSSTFileWriter(false)
+	sstWriter.Open("test_table_fused")
 
-	WriteSSTableOneFile("test_table_fused", sorted_entries)
+	for _, sstEntry := range sorted_entries {
+		sstWriter.Put(sstEntry)
+	}
+
+	sstWriter.Finish()
 }
 
 func TestReadWholeSSTableSingleFile(t *testing.T) {
@@ -31,6 +35,7 @@ func TestReadWholeSSTableSingleFile(t *testing.T) {
 	// pojavi u sred footer-a
 	// Problem se resi kada obrisem tabelu i opet pokrenem testove.
 	// Zasto se ovo dogadja? Nigde ne pisem po SSTabeli, a TestSSTableSingleFile treba da kreira novi fajl.
+	// Razlog: O_CREATE flag ne brise fajlove i onda mogu ostati stari podaci
 	iter := GetSSTableIterator("test_table_fused-Data.db")
 
 	if iter == nil {
@@ -136,16 +141,23 @@ func TestReadSSTableByKeySingleFile(t *testing.T) {
 }
 
 func TestWriteIntense(t *testing.T) {
-	entries := make([]*memtable.MemTableEntry, 0)
+	entries := make([]*SSTableEntry, 0)
 
 	for i := uint64(0); i < 20000; i += 2 {
 		key := fmt.Sprintf("%05d", i)
 		value := make([]byte, 8)
 		binary.LittleEndian.PutUint64(value, i)
-		entries = append(entries, memtable.CreateEntry([]byte(key), value))
+		entries = append(entries, CreateFreshSSTableEntry([]byte(key), value))
 	}
 
-	WriteSSTableOneFile("intense_table", entries)
+	sstWriter := GetSSTFileWriter(false)
+	sstWriter.Open("intense_table")
+
+	for _, sstEntry := range entries {
+		sstWriter.Put(sstEntry)
+	}
+
+	sstWriter.Finish()
 }
 
 func TestReadIntense(t *testing.T) {

@@ -1,16 +1,8 @@
 package sstable
 
-import (
-	"encoding/binary"
-	"fmt"
-	"os"
-
-	"github.com/darkokos/NAiSP_Projekat/memtable"
-	"github.com/darkokos/NAiSP_Projekat/merkleTree"
-)
-
 // Ova funkcija se ne koristi - Implementirano u okviru SSTFileWriter-a
 // Pise Merkle stablo u zaseban fajl
+/*
 func writeMetadataSeparateFile(entries []*memtable.MemTableEntry, filename string) {
 	data := make([][]byte, len(entries))
 
@@ -37,3 +29,4 @@ func writeMetadataSeparateFile(entries []*memtable.MemTableEntry, filename strin
 
 	metdata_file.Close()
 }
+*/

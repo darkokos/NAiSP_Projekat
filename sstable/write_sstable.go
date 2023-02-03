@@ -1,21 +1,5 @@
 package sstable
 
-import (
-	"encoding/binary"
-	"hash/crc32"
-	"os"
-	"time"
-
-	wal "github.com/darkokos/NAiSP_Projekat/WAL"
-	"github.com/darkokos/NAiSP_Projekat/memtable"
-)
-
-const (
-	SSTABLE_MAGIC_NUMBER_SIZE         = 8                          // Velicina magicnog broja u bajtovima
-	SSTABLE_MULTI_FILE_MAGIC_NUMBER   = uint64(0x473700DD14E7F08B) // Magicni broj za SSTabelu u rezimu gde je jedna SSTabele sacinjena iz vise fajlova
-	SSTABALE_SINGLE_FILE_MAGIC_NUMBER = uint64(0xE14695378B12D2F8) // Magicni broj za SSTabelu u rezimu gde je su svi elementi SSTabele u jednom fajlu
-)
-
 // Funkcija zapisuje niz MemTableEntry-a u SSTable sa imenom filename.
 //
 // Format zapisa SSTable-a:
@@ -52,8 +36,11 @@ const (
 
 // TODO: Sledece dve funkcije bi trebalo da budu jedna koja ce citati iz konfiguracije kako da pise
 
+// Ove funkcije su zakomentarisane jer izazivaju cirkularne importe izmedju sstable i memtable
+
 // Funkcija pise MemTable zapise u SSTabelu koja se nalazi u vise fajlova.
 // filename_prefix predstavlja string koji ce se nalaziti pre -Data.db, -Index.db, ...
+/*
 func WriteSSTableMultipleFiles(filename_prefix string, sortedEntries []*memtable.MemTableEntry) {
 
 	sstWriter := GetSSTFileWriter(true)
@@ -148,59 +135,4 @@ func writeSSTableEntryFromMemtable(sstableFile *os.File, entry *memtable.MemTabl
 		panic(err)
 	}
 }
-
-// Funkcija pise red SSTable-a koji cuva prosledjeni
-// podatak
-func writeSSTableEntry(sstableFile *os.File, entry *SSTableEntry) {
-	timestamp := entry.Timestamp
-	timestamp_bytes := make([]byte, wal.TIMESTAMP_SIZE)
-	binary.LittleEndian.PutUint64(timestamp_bytes, uint64(timestamp))
-
-	tombstone_byte := make([]byte, wal.TOMBSTONE_SIZE)
-	if entry.Tombstone {
-		tombstone_byte[0] = 1
-	}
-
-	keySize := entry.KeySize
-	key_size_bytes := make([]byte, wal.KEY_SIZE_SIZE)
-	binary.LittleEndian.PutUint64(key_size_bytes, keySize)
-
-	valueSize := entry.ValueSize
-	value_size_bytes := make([]byte, wal.VALUE_SIZE_SIZE)
-	binary.LittleEndian.PutUint64(value_size_bytes, valueSize)
-
-	err := binary.Write(sstableFile, binary.LittleEndian, entry.CRC)
-	if err != nil {
-		panic(err)
-	}
-
-	err = binary.Write(sstableFile, binary.LittleEndian, timestamp_bytes)
-	if err != nil {
-		panic(err)
-	}
-
-	err = binary.Write(sstableFile, binary.LittleEndian, tombstone_byte)
-	if err != nil {
-		panic(err)
-	}
-
-	err = binary.Write(sstableFile, binary.LittleEndian, key_size_bytes)
-	if err != nil {
-		panic(err)
-	}
-
-	err = binary.Write(sstableFile, binary.LittleEndian, value_size_bytes)
-	if err != nil {
-		panic(err)
-	}
-
-	err = binary.Write(sstableFile, binary.LittleEndian, entry.Key)
-	if err != nil {
-		panic(err)
-	}
-
-	err = binary.Write(sstableFile, binary.LittleEndian, entry.Value)
-	if err != nil {
-		panic(err)
-	}
-}
+*/
