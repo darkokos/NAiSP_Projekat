@@ -229,7 +229,7 @@ func TestMemtableBTreeGeneral(t *testing.T) {
 }
 
 func TestRadnomStringsSmallestPossibleFail(t *testing.T) {
-	// Ovaj test ne radi za 10-15% seed-ova koje se postave
+	// Ovo je nekada fail-ovalo
 	random_strings := make([]string, 0)
 	rand.Seed(9)
 
@@ -272,7 +272,6 @@ func TestRadnomStringsSmallestPossibleFail(t *testing.T) {
 }
 
 func TestRadnomStrings(t *testing.T) {
-	// Ovaj test ne radi za 10-15% seed-ova koje se postave
 	random_strings := make([]string, 0)
 	rand.Seed(42)
 
