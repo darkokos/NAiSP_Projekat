@@ -20,13 +20,13 @@ func NewLogStructuredMergeTree(capacity int) *LogStructuredMergeTree {
 	return &LogStructuredMergeTree{
 		memtable:     *memtable.MakeHashMapMemTable(capacity),
 		level:        int(config.Configuration.LSMTreeLevels),
-		currentlevel: findlevel(),
+		currentlevel: Findlevel(),
 	}
 
 }
 
 // Trazi trenutni najveci nivo
-func findlevel() int {
+func Findlevel() int {
 	i := 1
 	for {
 		iter := sstable.GetSSTableIterator("level-" + fmt.Sprint(i) + "-usertable-000001--Data.db")
