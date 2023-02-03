@@ -82,80 +82,64 @@ func (lsmt *LogStructuredMergeTree) FindInSSTable(key []byte) (string, bool) {
 
 }
 
-// Funkcija uzima dva fajla, i pravi sortirani treci fajl
-func merge(file1 string, file2 string, outputstring string) bool {
-	iterator1 := sstable.GetSSTableIterator(file1)
-	iterator2 := sstable.GetSSTableIterator(file2)
+func MergeMultipleTables(files []string, outputfile string) bool {
+	iterators := []sstable.SSTableIterator{}
+	entries := []sstable.SSTableEntry{}
 	writer := sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
-	writer.Open(outputstring)
-	entry1 := iterator1.Next()
-	entry2 := iterator2.Next()
+	writer.Open(outputfile)
+	for i := range files {
+		iterator := sstable.GetSSTableIterator(files[i])
+		if iterator == nil {
+			fmt.Println("Ne radi")
+			continue
+		}
+		iterators = append(iterators, *iterator)
+		entry := iterator.Next()
+		if entry == nil {
+			fmt.Println("Ne radi")
+			continue
+		}
+		entries = append(entries, *entry)
+	}
 	for {
-		if iterator1.Valid && iterator2.Valid {
-			if string(entry1.Key) < string(entry2.Key) {
-				if !entry1.Tombstone {
-					writer.Put(entry1)
-				}
-				entry1 = iterator1.Next()
-				continue
+		min := &sstable.SSTableEntry{}
+		for i := range entries {
+			if i == 0 {
+				min = &entries[0]
 			} else {
-				if string(entry2.Key) < string(entry1.Key) {
-					if !entry2.Tombstone {
-						writer.Put(entry2)
-					}
-					entry2 = iterator2.Next()
-					continue
+				if string(min.Key) > string(entries[i].Key) {
+					min = &entries[i]
 				} else {
-					if string(entry2.Key) == string(entry1.Key) {
-						if entry1.Timestamp > entry2.Timestamp {
-							if !entry1.Tombstone {
-								writer.Put(entry1)
-							} else {
-								if !entry2.Tombstone {
-									writer.Put(entry2)
-								}
-							}
-							entry1 = iterator1.Next()
-							entry2 = iterator2.Next()
-							continue
-						} else {
-							if entry1.Timestamp < entry2.Timestamp {
-								if !entry2.Tombstone {
-									writer.Put(entry2)
-								} else {
-									if !entry1.Tombstone {
-										writer.Put(entry1)
-									}
-								}
-								entry1 = iterator1.Next()
-								entry2 = iterator2.Next()
-								continue
-							}
+
+					if string(min.Key) == string(entries[i].Key) {
+
+						if min.Timestamp < entries[i].Timestamp {
+							min = &entries[i]
 						}
 					}
-				}
 
+				}
 			}
 		}
-		if !iterator1.Valid && iterator2.Valid {
-			if !entry2.Tombstone {
-				writer.Put(entry2)
+		writer.Put(min)
+		tempkey := string(min.Key)
+		for i := range entries {
+			if tempkey == string(entries[i].Key) {
+				entry := iterators[i].Next()
+				if entry == nil {
+					iterators = append(iterators[:i], iterators[i+1:]...)
+					entries = append(entries[:i], entries[i+1:]...)
+					i--
+				} else {
+					entries[i] = *entry
+				}
 			}
-			entry2 = iterator2.Next()
-			continue
 		}
-		if iterator1.Valid && !iterator2.Valid {
-			if !entry1.Tombstone {
-				writer.Put(entry1)
-			}
-			entry1 = iterator1.Next()
-			continue
-		}
-		if !iterator1.Valid && !iterator2.Valid {
+		if len(iterators) == 0 {
+			writer.Finish()
 			break
 		}
 
 	}
-	writer.CloseFiles()
 	return true
 }
