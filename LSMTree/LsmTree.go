@@ -2,6 +2,7 @@ package lsmtree
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 
 	"github.com/darkokos/NAiSP_Projekat/config"
@@ -25,15 +26,22 @@ func NewLogStructuredMergeTree(capacity int) *LogStructuredMergeTree {
 
 }
 
-// Trazi trenutni najveci nivo
+// Trazi trenutni najveci nivo ili vraca 0 ako nema sstabeli
 func Findlevel() int {
-	i := 1
-	for {
-		iter := sstable.GetSSTableIterator("level-" + fmt.Sprint(i) + "-usertable-000001--Data.db")
-		if iter == nil {
-			return i
-		}
-		i++
+	files, err := filepath.Glob("level-*-Data.db")
+	if err != nil || len(files) == 0 {
+		return 0 // Nema sstabeli, najveci nivo je C0
+	}
+
+	last_table_name := files[len(files)-1] // Niz imena fajlova koji ce se vratiti ce biti sortiran
+	prefix_before_level := "level-"
+	// Definisano je da se koriste dve cifre za nivo
+	level, err := strconv.Atoi(last_table_name[len(prefix_before_level) : len(prefix_before_level)+2])
+
+	if err == nil {
+		return level
+	} else {
+		return 0
 	}
 }
 
