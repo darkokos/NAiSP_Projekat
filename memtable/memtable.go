@@ -145,7 +145,7 @@ func (memTable *MemTable) RangeScan(begin string, end string) [][]byte {
 
 	for _, entry := range memTableEntries {
 		key_str := string(entry.Key)
-		if begin <= key_str && key_str <= end {
+		if begin <= key_str && key_str <= end && !entry.Tombstone {
 			result = append(result, entry.Value)
 		} else if key_str > end {
 			break
@@ -162,7 +162,7 @@ func (memTable *MemTable) PrefixScan(prefix string) [][]byte {
 
 	for _, entry := range memTableEntries {
 		key_str := string(entry.Key)
-		if strings.HasPrefix(key_str, prefix) {
+		if strings.HasPrefix(key_str, prefix) && !entry.Tombstone {
 			result = append(result, entry.Value)
 		}
 	}

@@ -59,7 +59,7 @@ func RangeScanSSTable(begin string, end string, sstFileName string, indexFilenam
 	for entry := sstableIterator.Next(); sstableIterator.Valid; entry = sstableIterator.Next() {
 		key_str := string(entry.Key)
 
-		if begin <= key_str && key_str <= end {
+		if begin <= key_str && key_str <= end && !entry.Tombstone {
 			result = append(result, entry)
 		} else if key_str > end {
 			break

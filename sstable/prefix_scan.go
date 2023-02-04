@@ -67,7 +67,7 @@ func PrefixScanSSTable(prefix string, sstFileName string, indexFilename string, 
 	for entry := sstableIterator.Next(); sstableIterator.Valid; entry = sstableIterator.Next() {
 		key_str := string(entry.Key)
 
-		if strings.HasPrefix(key_str, prefix) {
+		if strings.HasPrefix(key_str, prefix) && !entry.Tombstone {
 			result = append(result, entry)
 		} else if key_str > prefix {
 			break // S obzirom da je tabela sortirana znamo da sledeci stringovi ne mogu pocinjati
