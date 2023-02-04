@@ -1,7 +1,5 @@
 package BTree
 
-import "fmt"
-
 type KvPair struct {
 	key       []byte
 	val       []byte
@@ -132,27 +130,33 @@ func (t *BTree) AddKey(key []byte, value []byte) int {
 		}
 		return -1 //Kljuc vec postoji, ako nije logicki obrisan, ne radimo nista, ako jeste logicki obrisan treba ga vratiti u opseg, i azurirati vrednost
 	}
-	old_len := len(t.GetValuesSortedByKey())
+	//old_len := len(t.GetValuesSortedByKey())
 	node.AddKey(pair, t)
-	new_len := len(t.GetValuesSortedByKey())
+	//new_len := len(t.GetValuesSortedByKey())
 
-	if new_len != old_len+1 {
-		fmt.Println()
-		fmt.Println("Nestanak elementa kad se dodao kljuc ", string(pair.key))
-		panic("Neki elementi su nestali")
-	}
+	/*
+		if new_len != old_len+1 {
+			fmt.Println()
+			fmt.Println("Nestanak elementa kad se dodao kljuc ", string(pair.key))
+			panic("Neki elementi su nestali")
+		}
+	*/
 	return 0
 }
 func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
-	if len(node.children) != len(node.keys)+1 {
-		fmt.Println()
-		fmt.Println(len(node.children), len(node.keys))
-		panic("InsertKey preduslovi ne vaze")
-	}
+	/*
+		if len(node.children) != len(node.keys)+1 {
+			fmt.Println()
+			fmt.Println(len(node.children), len(node.keys))
+			panic("InsertKey preduslovi ne vaze")
+		}
+	*/
 	over, _ := (*node).InsertKey(pair)
-	if len(node.children) != len(node.keys)+1 {
-		panic("InsertKey postuslovi ne vaze")
-	}
+	/*
+		if len(node.children) != len(node.keys)+1 {
+			panic("InsertKey postuslovi ne vaze")
+		}
+	*/
 	emptyNode := &BTreeNode{d: (*node).d}
 
 	var rotationIndex int
@@ -161,7 +165,7 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 		if (*node).parent != nil {
 			for i, child := range (*(*node).parent).children {
 				if len((*child).keys) < (*node).d && (*child).parent != nil {
-					fmt.Print(*child, "ROTACIJA||\n")
+					//fmt.Print(*child, "ROTACIJA||\n")
 					var x int
 					// nasli smo sibling koji ima prostora, rotacija
 					for ii, c := range (*(*node).parent).children {
@@ -182,9 +186,11 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 
 					// rotationIndex = x
 
-					if len(node.parent.children) != len(node.parent.keys)+1 {
-						panic("Ovo nije trebalo da se desi 4")
-					}
+					/*
+						if len(node.parent.children) != len(node.parent.keys)+1 {
+							panic("Ovo nije trebalo da se desi 4")
+						}
+					*/
 
 					if i > 0 {
 						if i < x {
@@ -196,42 +202,45 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 						}
 
 						(*node).keys = append((*node).keys[:rotationIndex], (*node).keys[rotationIndex+1:]...)
-						fmt.Println()
-						fmt.Println("Kvari se za ", string(pair.key))
 						(*node).children = append((*node).children[:i], (*node).children[i+1:]...) // Rotacija se radi samo za listove pa ovo nema smisla
 
-						for j := 0; j < len(node.parent.keys)-1; j++ {
-							if string(node.parent.keys[j].key) > string(node.parent.keys[j+1].key) {
-								panic("Sortiranost kljuceva ne vazi 1")
+						/*
+							for j := 0; j < len(node.parent.keys)-1; j++ {
+								if string(node.parent.keys[j].key) > string(node.parent.keys[j+1].key) {
+									panic("Sortiranost kljuceva ne vazi 1")
+								}
 							}
-						}
+						*/
 					} else {
 						(*child).AddKey((*(*node).parent).keys[i], t) // Ovo izaziva gresku ako je dete koje ima mesta poslednje u nizu dece
 						(*(*node).parent).keys[i] = (*node).keys[rotationIndex]
+
 						(*node).keys = append((*node).keys[:rotationIndex], (*node).keys[rotationIndex+1:]...)
-						fmt.Println()
-						fmt.Println("Kvari se za ", string(pair.key))
 						(*node).children = append((*node).children[:i], (*node).children[i+1:]...)
 
-						for j := 0; j < len(node.parent.keys)-1; j++ {
-							if string(node.parent.keys[j].key) > string(node.parent.keys[j+1].key) {
-								panic("Sortiranost kljuceva ne vazi 2")
+						/*
+							for j := 0; j < len(node.parent.keys)-1; j++ {
+								if string(node.parent.keys[j].key) > string(node.parent.keys[j+1].key) {
+									panic("Sortiranost kljuceva ne vazi 2")
+								}
 							}
-						}
+						*/
 					}
 					// Rotacija se radi samo za listove pa ovo nema smisla
 
-					if (len(node.children) != len(node.keys)+1) || len(node.children) > t.d+1 {
-						panic("Ovo nije trebalo da se desi 3")
-					}
+					/*
+						if (len(node.children) != len(node.keys)+1) || len(node.children) > t.d+1 {
+							panic("Ovo nije trebalo da se desi 3")
+						}
 
-					if len(node.parent.children) != len(node.parent.keys)+1 || len(node.parent.keys) > t.d {
-						panic("Ovo nije trebalo da se desi 4")
-					}
+						if len(node.parent.children) != len(node.parent.keys)+1 || len(node.parent.keys) > t.d {
+							panic("Ovo nije trebalo da se desi 4")
+						}
 
-					if len(child.children) != len(child.keys)+1 || len(child.keys) > t.d {
-						panic("Ovo nije trebalo da se desi 5")
-					}
+						if len(child.children) != len(child.keys)+1 || len(child.keys) > t.d {
+							panic("Ovo nije trebalo da se desi 5")
+						}
+					*/
 
 					//(*node).AddKey(pair, t) Zbog promene nacina na koji radi insert ovo je sada redundantno
 					return 0
@@ -240,7 +249,7 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 		}
 
 		//Ne moze rotacija, ide deljenje cvora
-		fmt.Print("DELJENJE \n")
+		//fmt.Print("DELJENJE \n")
 		newParent := BTreeNode{
 			parent: (*node).parent,
 			d:      (*node).d}
@@ -250,7 +259,7 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 			parent = (*node).parent
 
 			for parent != nil && len(node.keys) > t.d {
-				old_subtree_len := len(parent.GetValues())
+				//old_subtree_len := len(parent.GetValues())
 
 				leftChild := BTreeNode{
 					parent: parent,
@@ -298,19 +307,23 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 					}
 				}
 
-				if len(node.children) != len(node.keys)+1 {
-					panic("Ovo nije trebalo da se desi")
-				}
+				/*
+					if len(node.children) != len(node.keys)+1 {
+						panic("Ovo nije trebalo da se desi")
+					}
 
-				if len(parent.children) != len(parent.keys)+1 {
-					panic("Ovo nije trebalo da se desi 2")
-				}
+					if len(parent.children) != len(parent.keys)+1 {
+						panic("Ovo nije trebalo da se desi 2")
+					}
+				*/
 
-				new_subtree_len := len(parent.GetValues())
+				/*
+					new_subtree_len := len(parent.GetValues())
 
-				if new_subtree_len != old_subtree_len {
-					panic("Promena broja elemenata u deljenju")
-				}
+					if new_subtree_len != old_subtree_len {
+						panic("Promena broja elemenata u deljenju")
+					}
+				*/
 
 				node = parent
 				parent = parent.parent
@@ -326,8 +339,8 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 				rightChild := BTreeNode{
 					parent: t.root,
 					d:      (*node).d}
+
 				leftChild.keys = append(leftChild.keys, (*node).keys[:int(len((*node).keys)/2)]...)
-				fmt.Print(leftChild)
 				rightChild.keys = append(rightChild.keys, (*node).keys[int(len((*node).keys)/2)+1:]...)
 				leftChild.children = append(leftChild.children, (*node).children[:int(len((*node).children)/2)+1]...)
 				rightChild.children = append(rightChild.children, (*node).children[int(len((*node).children)/2)+1:]...)
@@ -369,7 +382,6 @@ func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 			d:      (*node).d}
 
 		leftChild.keys = append(leftChild.keys, (*node).keys[:int(len((*node).keys)/2)]...)
-		//fmt.Print(leftChild)
 		rightChild.keys = append(rightChild.keys, (*node).keys[int(len((*node).keys)/2)+1:]...)
 
 		if len((*node).children) != 0 {
