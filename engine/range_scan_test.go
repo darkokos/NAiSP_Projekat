@@ -282,3 +282,55 @@ func TestRangeScanInteractionWithDeletions(t *testing.T) {
 
 	Cleanup()
 }
+
+func TestRangeScanInteractionWithDeletionsAndEdits(t *testing.T) {
+	config.DefaultConfiguration.MemtableSize = 10
+	config.DefaultConfiguration.RateLimit = 9999
+	config.DefaultConfiguration.MultipleFileSSTable = true
+	config.ReadConfig()
+
+	Cleanup()
+
+	db := GetNewDB()
+	// Stavljamo kljuceve od 10 da bi smo imali intervale sa obe strane koji ne
+	// obuhvataju unete podatke
+	for i := 0; i <= 200; i++ {
+		db.Put(fmt.Sprintf("%03d", i), []byte{uint8(i)})
+	}
+
+	// Treba jos 9 kljuceva da izazovemo flush
+	db.Put("001", []byte{1})
+	db.Delete("002")
+	db.Delete("003")
+	db.Delete("004")
+	db.Delete("005")
+	db.Delete("006")
+	db.Delete("007")
+	db.Delete("008")
+	db.Delete("009")
+
+	// Ovi delete-ovi ce biti u MemTabeli
+	// U sstabelama ovi kljucevi nisu obrisani
+	db.Delete("101")
+	db.Delete("010")
+	db.Delete("145")
+	db.Put("002", []byte{2})
+
+	results := db.RangeScan("001", "200", 1, 2000)
+	if len(results) != 200-10 { // 11 brisanja, ali 002 smo vratili
+		fmt.Println(results)
+		t.Fatalf("Nije uctian ispravan broj zapisa")
+	}
+
+	// Kljuc: 1 Vrednost: 1
+	if results[0][0] != 1 {
+		t.Fatalf("Nije stavljena aktuelna vrednost u rezultat")
+	}
+
+	//Kljuc: 2 Vrednost: 2
+	if results[1][0] != 2 {
+		t.Fatalf("Nije stavljena aktuelna vrednost u rezultat")
+	}
+
+	Cleanup()
+}

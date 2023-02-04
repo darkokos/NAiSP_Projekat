@@ -59,7 +59,10 @@ func RangeScanSSTable(begin string, end string, sstFileName string, indexFilenam
 	for entry := sstableIterator.Next(); sstableIterator.Valid; entry = sstableIterator.Next() {
 		key_str := string(entry.Key)
 
-		if begin <= key_str && key_str <= end && !entry.Tombstone {
+		// Ovde vracamo i logicki obrisane jer u Range Scan operaciji
+		// u okviru sistema moramo gledati i druge tabele pa mora uzeti
+		// u obzir da li je kljuc bio obrisan u nekoj drugoj tabeli
+		if begin <= key_str && key_str <= end {
 			result = append(result, entry)
 		} else if key_str > end {
 			break

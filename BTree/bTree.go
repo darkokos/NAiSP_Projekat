@@ -514,7 +514,12 @@ func (node *BTreeNode) InsertKey(pair KvPair) (int, int) {
 }
 
 func (btree *BTree) GetValuesSortedByKey() [][]byte {
-	return btree.root.GetValues()
+	if btree.root != nil {
+		return btree.root.GetValues()
+	} else {
+		return [][]byte{}
+	}
+
 }
 
 // Funkcija dobavlja vrednosti sortirane po ključu kojim im je dodeljen

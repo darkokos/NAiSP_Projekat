@@ -16,14 +16,16 @@ import (
 // Paginacija pocinje stranicom 1. Ako se prosledi broj stranice 0, vraca se prazan niz.
 func (engine *DB) RangeScan(begin string, end string, page_number uint, page_size uint) [][]byte {
 
-	values := make([][]byte, 0)
-
 	if begin > end || page_number < 1 || page_size == 0 {
-		return values
+		return [][]byte{}
 	}
 
+	result_aggregator := CreateAggregator()
+
 	// Prvo range-scan-ujemo memtable
-	values = append(values, engine.memtable.RangeScan(begin, end)...)
+	for _, memtable_entry := range engine.memtable.RangeScanEntries(begin, end) {
+		result_aggregator.Add(memtable_entry)
+	}
 
 	// Trazimo rezultate u sstabelama
 
@@ -47,14 +49,13 @@ func (engine *DB) RangeScan(begin string, end string, page_number uint, page_siz
 		for _, entry := range matchingEntries {
 			// Moramo proveriti da li je kljuc bio obrisan iz memtabele
 			// Ako jeste onda je on trenutno obrisan i ne treba ga vratiti
-			if !engine.memtable.IsDeleted(string(entry.Key)) {
-				values = append(values, entry.Value)
-			}
-
+			result_aggregator.AddSSTableEntry(entry)
 		}
 	}
 
 	begin_index_to_return := (page_number - 1) * page_size
+
+	values := result_aggregator.GetResults()
 
 	if len(values) < int(begin_index_to_return) {
 		return [][]byte{}

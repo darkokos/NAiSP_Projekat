@@ -155,6 +155,27 @@ func (memTable *MemTable) RangeScan(begin string, end string) [][]byte {
 	return result
 }
 
+func (memTable *MemTable) RangeScanEntries(begin string, end string) []*MemTableEntry {
+	result := make([]*MemTableEntry, 0)
+
+	memTableEntries := memTable.data.GetSortedEntries()
+
+	if string(memTableEntries[len(memTableEntries)-1].Key) < begin {
+		return result
+	}
+
+	for _, entry := range memTableEntries {
+		key_str := string(entry.Key)
+		if begin <= key_str && key_str <= end {
+			result = append(result, entry)
+		} else if key_str > end {
+			break
+		}
+	}
+
+	return result
+}
+
 func (memTable *MemTable) PrefixScan(prefix string) [][]byte {
 	result := make([][]byte, 0)
 
@@ -164,6 +185,21 @@ func (memTable *MemTable) PrefixScan(prefix string) [][]byte {
 		key_str := string(entry.Key)
 		if strings.HasPrefix(key_str, prefix) && !entry.Tombstone {
 			result = append(result, entry.Value)
+		}
+	}
+
+	return result
+}
+
+func (memTable *MemTable) PrefixScanEntries(prefix string) []*MemTableEntry {
+	result := make([]*MemTableEntry, 0)
+
+	memTableEntries := memTable.data.GetSortedEntries()
+
+	for _, entry := range memTableEntries {
+		key_str := string(entry.Key)
+		if strings.HasPrefix(key_str, prefix) {
+			result = append(result, entry)
 		}
 	}
 

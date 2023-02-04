@@ -29,7 +29,7 @@ func (btreeInternal *BTreeInternal) Get(key string) (*MemTableEntry, bool) {
 	if ok == -1 {
 		return nil, false
 	} else {
-		return memTableEntryFromBytes(v), true
+		return MemTableEntryFromBytes(v), true
 	}
 }
 
@@ -38,7 +38,7 @@ func (btreeInternal *BTreeInternal) Get(key string) (*MemTableEntry, bool) {
 // Ako element ne postoji, konstruise novi MemTableEntry i dodaje ga u strukturu
 func (btreeInternal *BTreeInternal) Update(key string, value []byte) {
 	newEntry := CreateEntry([]byte(key), value)
-	newEntryBytes := memTableEntryToBytes(newEntry)
+	newEntryBytes := MemTableEntryToBytes(newEntry)
 
 	if newEntryBytes == nil {
 		fmt.Println("Greska u pisanju u memtable (BTree)")
@@ -60,7 +60,7 @@ func (btreeInternal *BTreeInternal) GetSortedEntries() []*MemTableEntry {
 	entries := make([]*MemTableEntry, 0, btreeInternal.Size())
 
 	for _, value := range btreeInternal.data.GetValuesSortedByKey() {
-		entries = append(entries, memTableEntryFromBytes(value))
+		entries = append(entries, MemTableEntryFromBytes(value))
 	}
 
 	return entries
@@ -78,7 +78,7 @@ func (btreeInternal *BTreeInternal) Delete(key string) bool {
 	// v := skiplistInternal.data.Search(key)
 
 	if ok != -1 {
-		entry := memTableEntryFromBytes(v)
+		entry := MemTableEntryFromBytes(v)
 		if entry != nil {
 			if entry.Tombstone {
 				return false
@@ -86,7 +86,7 @@ func (btreeInternal *BTreeInternal) Delete(key string) bool {
 
 			entry.Tombstone = true
 			entry.Value = []byte{}
-			btreeInternal.data.ModifyKey(entry.Key, memTableEntryToBytes(entry))
+			btreeInternal.data.ModifyKey(entry.Key, MemTableEntryToBytes(entry))
 			return true
 		} else {
 			// Greska u konverzija MemTableEntry-Byte
@@ -95,7 +95,7 @@ func (btreeInternal *BTreeInternal) Delete(key string) bool {
 	} else {
 		entry := CreateEntry([]byte(key), []byte{})
 		entry.Tombstone = true
-		btreeInternal.data.AddKey([]byte(key), memTableEntryToBytes(entry))
+		btreeInternal.data.AddKey([]byte(key), MemTableEntryToBytes(entry))
 		btreeInternal.size++ // Dodali smo element u b stablo
 		return true
 	}
