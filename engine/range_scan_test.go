@@ -121,7 +121,6 @@ func TestRangeScanPaginationIterative(t *testing.T) {
 		results = db.RangeScan("001", "200", uint(page_number), uint(page_size))
 	}
 
-	// 200 ce zavrsiti na pocetku jer je procitan iz memtable-a iz kog prvo dodajemo vrednosti
 	fmt.Println("Brojevi 1-200", all_results)
 
 	if total_number_of_results != 200 {
