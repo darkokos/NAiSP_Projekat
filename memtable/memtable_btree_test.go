@@ -298,15 +298,11 @@ func TestRadnomStrings(t *testing.T) {
 	//memTable.Flush()
 
 	for i, ran_str := range random_strings {
-		fmt.Println(string(ran_str))
+		//fmt.Println(string(ran_str))
 		_, ok := memTable.Get(string(ran_str))
 		if !ok {
 			t.Fatalf("Trebalo je da nadje ovaj string %d", i)
 		}
 	}
-
-}
-
-func TestBackwardInts(t *testing.T) {
 
 }
