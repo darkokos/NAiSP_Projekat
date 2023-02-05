@@ -13,7 +13,7 @@ type CMS struct {
 	certainty float64
 	hashes    []HashWithSeed
 }
-
+//Funkcija za inicijalizaciju nad vec napravljenim cms objektom, uzima preciznost i sigurnost a k i m racuna
 func (cms *CMS) Init(precision float64, certainty float64) {
 	(*cms).precision = precision
 	(*cms).certainty = certainty
@@ -22,10 +22,12 @@ func (cms *CMS) Init(precision float64, certainty float64) {
 	(*cms).table = make([][]uint, (*cms).k)
 	for i := range (*cms).table {
 		(*cms).table[i] = make([]uint, (*cms).m)
+		
 	}
 	(*cms).hashes = CreateHashFunctions((*cms).k)
 
 }
+//Funkcija za dodavanje u cms
 func (cms *CMS) Add(key []byte) {
 	var j uint64
 	for i := range (*cms).hashes {
@@ -33,6 +35,7 @@ func (cms *CMS) Add(key []byte) {
 		(*cms).table[i][j] += 1
 	}
 }
+//Funkcija za citanje iz cms-a
 func (cms *CMS) Read(key []byte) uint {
 	min := ^uint(0)
 	var j uint64
@@ -44,7 +47,11 @@ func (cms *CMS) Read(key []byte) uint {
 	}
 	return min
 }
+//Funkcija za serijalizaciju cms-a
 func (cms *CMS) Serialize() []byte {
+	if cms == nil{
+		return nil
+	}
 	var ret []byte
 
 	ret = append(ret, serializeFloat((*cms).precision)...)
@@ -58,7 +65,12 @@ func (cms *CMS) Serialize() []byte {
 
 	return ret
 }
-func Deserialize(buf []byte) CMS {
+//Funkcija za deserijalizaciju cms-a
+
+func Deserialize(buf []byte) *CMS {
+	if buf == nil || len(buf) == 0{
+		return nil
+	}
 	precision := deserializeFloat(buf[0:8])
 	certainty := deserializeFloat(buf[8:16])
 	cms := CMS{}
@@ -71,8 +83,9 @@ func Deserialize(buf []byte) CMS {
 			x += 4
 		}
 	}
-	return cms
+	return &cms
 }
+//Pomocna funkcije za serijalizaciju i deserijalizaciju uint-a i float-a
 func serializeUint(x uint32) []byte {
 	a := make([]byte, 4)
 	binary.LittleEndian.PutUint32(a, x)
