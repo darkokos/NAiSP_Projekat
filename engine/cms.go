@@ -29,3 +29,14 @@ func (engine *DB) ReadFromCMS(cmsKey string, key []byte) (int, uint){
 	}
 	return 0, cms.Read(key)
 }
+func (engine *DB) DeleteCMS(cmsKey string) bool{
+	return engine.Delete(TransformKeyToBloomFilterKey("cms." + cmsKey))
+} 
+func (engine *DB) CreateCMS(key string, precision uint, certainty uint) (success bool) {
+
+	if precision == 0 || certainty == 0 {
+		return false
+	}
+	cms := CMS.CMS{}
+	return engine.PutCMS(key, cms)
+}
