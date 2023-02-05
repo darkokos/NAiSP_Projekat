@@ -8,6 +8,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/darkokos/NAiSP_Projekat/config"
 )
 
 func TestSSTableSingleFile(t *testing.T) {
@@ -141,6 +143,9 @@ func TestReadSSTableByKeySingleFile(t *testing.T) {
 }
 
 func TestWriteIntense(t *testing.T) {
+	config.DefaultConfiguration.SummaryDensity = 128
+	config.ReadConfig()
+
 	entries := make([]*SSTableEntry, 0)
 
 	for i := uint64(0); i < 20000; i += 2 {
@@ -200,5 +205,4 @@ func Test100000RandomStrings(t *testing.T) {
 			t.Fatalf("Nije trebalo da nadje kljuc %s", ran_str)
 		}
 	}
-
 }

@@ -116,9 +116,18 @@ func (iter *IndexIterator) SeekAndClose(key_string string) *IndexEntry {
 
 	for currentIndexEntry := iter.Next(); iter.Valid; currentIndexEntry = iter.Next() {
 		if currentIndexEntry.Key == key_string {
+			iter.indexFile.Close()
+			iter.Valid = false
 			return currentIndexEntry
 		}
 	}
 
+	iter.indexFile.Close()
+	iter.Valid = false
 	return nil
+}
+
+func (iter *IndexIterator) Close() {
+	iter.indexFile.Close()
+	iter.Valid = false
 }

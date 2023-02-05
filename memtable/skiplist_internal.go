@@ -24,7 +24,7 @@ func (skiplistInternal *SkipListInternal) Get(key string) (*MemTableEntry, bool)
 	if v == nil {
 		return nil, false
 	} else {
-		return memTableEntryFromBytes(v), true
+		return MemTableEntryFromBytes(v), true
 	}
 }
 
@@ -34,9 +34,9 @@ func (skiplistInternal *SkipListInternal) Get(key string) (*MemTableEntry, bool)
 func (skiplistInternal *SkipListInternal) Update(key string, value []byte) {
 	newEntry := CreateEntry([]byte(key), value)
 
-	updateSuccesful := skiplistInternal.data.Update(key, memTableEntryToBytes(newEntry))
+	updateSuccesful := skiplistInternal.data.Update(key, MemTableEntryToBytes(newEntry))
 	if !updateSuccesful {
-		skiplistInternal.data.Insert(key, memTableEntryToBytes(newEntry))
+		skiplistInternal.data.Insert(key, MemTableEntryToBytes(newEntry))
 	}
 }
 
@@ -46,7 +46,7 @@ func (skiplistInternal *SkipListInternal) GetSortedEntries() []*MemTableEntry {
 
 	// Ubacujemo elemente iz mape u niz koji cemo vratiti
 	for _, value := range skiplistInternal.data.FirstLevelValues() {
-		entries = append(entries, memTableEntryFromBytes(value))
+		entries = append(entries, MemTableEntryFromBytes(value))
 	}
 
 	return entries
@@ -62,7 +62,7 @@ func (skiplistInternal *SkipListInternal) Delete(key string) bool {
 	v := skiplistInternal.data.Search(key)
 
 	if v != nil {
-		entry := memTableEntryFromBytes(v)
+		entry := MemTableEntryFromBytes(v)
 		if entry != nil {
 			if entry.Tombstone {
 				return false
@@ -70,7 +70,7 @@ func (skiplistInternal *SkipListInternal) Delete(key string) bool {
 
 			entry.Tombstone = true
 			entry.Value = []byte{}
-			skiplistInternal.data.Update(key, memTableEntryToBytes(entry))
+			skiplistInternal.data.Update(key, MemTableEntryToBytes(entry))
 			return true
 		} else {
 			// Greska u konverzija MemTableEntry-Byte
@@ -79,7 +79,7 @@ func (skiplistInternal *SkipListInternal) Delete(key string) bool {
 	} else {
 		entry := CreateEntry([]byte(key), []byte{})
 		entry.Tombstone = true
-		skiplistInternal.data.Insert(key, memTableEntryToBytes(entry))
+		skiplistInternal.data.Insert(key, MemTableEntryToBytes(entry))
 		return true
 	}
 }

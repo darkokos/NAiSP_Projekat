@@ -72,3 +72,95 @@ func TestMemtable(t *testing.T) {
 		t.Fatalf("Memtable bi trebalo da je bio flush-ovan")
 	}
 }
+
+func TestPrefixScan(t *testing.T) {
+
+	memTable := MakeHashMapMemTable(30)
+
+	memTable.Update("2022-01-01", []byte{0})
+	memTable.Update("2022-02-01", []byte{0})
+	memTable.Update("2022-03-01", []byte{0})
+	memTable.Update("2022-04-01", []byte{0})
+	memTable.Update("2022-05-01", []byte{0})
+	memTable.Update("2022-05-04", []byte{0})
+	memTable.Update("2022-06-01", []byte{0})
+	memTable.Update("2022-07-01", []byte{0})
+	memTable.Update("2022-07-07", []byte{0})
+	memTable.Update("2022-08-01", []byte{0})
+
+	memTable.Update("2023-02-05", []byte{0})
+
+	if len(memTable.PrefixScan("2022")) != 10 {
+		t.Fatalf("Nije procitan ispravan broj podataka")
+	}
+
+	if len(memTable.PrefixScan("2022-05")) != 2 {
+		t.Fatalf("Nije procitan ispravan broj podataka")
+	}
+
+	if len(memTable.PrefixScan("2022-07")) != 2 {
+		t.Fatalf("Nije procitan ispravan broj podataka")
+	}
+
+	if len(memTable.PrefixScan("2022-01")) != 1 {
+		t.Fatalf("Nije procitan ispravan broj podataka")
+	}
+
+	if len(memTable.PrefixScan("202")) != 11 {
+		t.Fatalf("Nije procitan ispravan broj podataka")
+	}
+
+	if len(memTable.PrefixScan("")) != 11 {
+		t.Fatalf("Nije procitan ispravan broj podataka")
+	}
+
+	if len(memTable.PrefixScan("a")) != 0 {
+		t.Fatalf("Nije procitan ispravan broj podataka")
+	}
+}
+
+func TestRangeScan(t *testing.T) {
+
+	memTable := MakeHashMapMemTable(30)
+
+	memTable.Update("2022-01-01", []byte{0})
+	memTable.Update("2022-02-01", []byte{0})
+	memTable.Update("2022-03-01", []byte{0})
+	memTable.Update("2022-04-01", []byte{0})
+	memTable.Update("2022-05-01", []byte{0})
+	memTable.Update("2022-05-04", []byte{0})
+	memTable.Update("2022-06-01", []byte{0})
+	memTable.Update("2022-07-01", []byte{0})
+	memTable.Update("2022-07-07", []byte{0})
+	memTable.Update("2022-08-01", []byte{0})
+
+	memTable.Update("2023-02-05", []byte{0})
+
+	if len(memTable.RangeScan("", "99999999")) != 11 {
+		t.Fatalf("Nije ucitan ispravan broj zapisa")
+	}
+
+	if len(memTable.RangeScan("2022-01-01", "2023-01-01")) != 10 {
+		t.Fatalf("Nije ucitan ispravan broj zapisa")
+	}
+
+	if len(memTable.RangeScan("2022-01-01", "2023-02-05")) != 11 {
+		t.Fatalf("Nije ucitan ispravan broj zapisa")
+	}
+
+	if len(memTable.RangeScan("2022-05-01", "2022-06-01")) != 3 {
+		t.Fatalf("Nije ucitan ispravan broj zapisa")
+	}
+
+	if len(memTable.RangeScan("2022-05-04", "2022-05-04")) != 1 {
+		t.Fatalf("Nije ucitan ispravan broj zapisa")
+	}
+
+	if len(memTable.RangeScan("2021-01-04", "2021-05-04")) != 0 {
+		t.Fatalf("Nije ucitan ispravan broj zapisa")
+	}
+
+	if len(memTable.RangeScan("", "2021-05-04")) != 0 {
+		t.Fatalf("Nije ucitan ispravan broj zapisa")
+	}
+}

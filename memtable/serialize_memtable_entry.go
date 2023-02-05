@@ -6,7 +6,7 @@ import (
 )
 
 // Cita MemTableEntryIzBajtova
-func memTableEntryFromBytes(byte_arr []byte) *MemTableEntry {
+func MemTableEntryFromBytes(byte_arr []byte) *MemTableEntry {
 	entry := &MemTableEntry{}
 	decoder := gob.NewDecoder(bytes.NewBuffer(byte_arr[:]))
 	err := decoder.Decode(entry)
@@ -17,7 +17,7 @@ func memTableEntryFromBytes(byte_arr []byte) *MemTableEntry {
 }
 
 // Pretvara MemTableEntry u niz bajtova
-func memTableEntryToBytes(entry *MemTableEntry) []byte {
+func MemTableEntryToBytes(entry *MemTableEntry) []byte {
 	buf := &bytes.Buffer{}
 	encoder := gob.NewEncoder(buf)
 	err := encoder.Encode(entry)

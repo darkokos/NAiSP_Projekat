@@ -7,6 +7,7 @@ import (
 	"os"
 
 	bloomfilter "github.com/darkokos/NAiSP_Projekat/bloom-filter"
+	"github.com/darkokos/NAiSP_Projekat/config"
 	"github.com/darkokos/NAiSP_Projekat/merkleTree"
 )
 
@@ -138,7 +139,7 @@ func (writer *SSTFileWriter) Open(base_name string) {
 // Ako je writer u rezimu pisanja u vise fajlova, dodavace i zapise u index i summary
 // Ako dodje do greske atribut Ok ce biti postavljen na false
 func (writer *SSTFileWriter) Put(entry *SSTableEntry) {
-	summary_density := 128
+	summary_density := int(config.Configuration.SummaryDensity)
 
 	key := entry.Key
 	//value := entry.Value
@@ -200,7 +201,7 @@ func (writer *SSTFileWriter) Finish() {
 		writer.CloseFiles()
 		return
 	}
-	summary_density := 128 //TODO: I ovde zameniti summary_density
+	summary_density := int(config.Configuration.SummaryDensity)
 
 	endOfData, err := writer.sstFile.Seek(0, io.SeekCurrent)
 	if err != nil {
