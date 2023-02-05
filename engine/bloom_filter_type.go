@@ -36,3 +36,21 @@ func (engine *DB) AddStringToBloomFilter(key string, new_value string) bool {
 		return false
 	}
 }
+
+func (engine *DB) AddBatchOfStringToBloomFilter(key string, values []string) bool {
+	serialized_bloom_filter := engine.Get(TransformKeyToBloomFilterKey(key))
+
+	if serialized_bloom_filter != nil {
+		bloom_filter := bloomfilter.Deserialize(serialized_bloom_filter)
+		for _, new_value := range values {
+			bloom_filter.Add([]byte(new_value))
+		}
+		return engine.Put(TransformKeyToBloomFilterKey(key), bloom_filter.Serialize())
+	} else {
+		return false
+	}
+}
+
+func (engine *DB) DeleteBloomFilter(key string) bool {
+	return engine.Delete(TransformKeyToBloomFilterKey(key))
+}
