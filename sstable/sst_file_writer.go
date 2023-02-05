@@ -197,7 +197,7 @@ func (writer *SSTFileWriter) CloseFiles() {
 // Pise pomocne strukture na odgovarajuca mesta i zatvara fajlove.
 // Ako dodje do greske atribut Ok ce biti postavljen na false.
 func (writer *SSTFileWriter) Finish() {
-	if writer.records_written == 0 {
+	if writer.Records_written == 0 {
 		writer.CloseFiles()
 		return
 	}
