@@ -31,7 +31,7 @@ type SSTFileWriter struct {
 	metadataFile      *os.File
 	tocFile           *os.File
 	is_multiple_files bool // TODO: Mozda cak ni ovo ne treba da bude tu kad budemo imali citanje konfiguracije
-	records_written   int  // Broj zapisa koji su zapisani
+	Records_written   int  // Broj zapisa koji su zapisani
 
 	// Vrednosti neophodne za pravilno pisanje summary-a
 	next_summary_key    []byte
@@ -46,7 +46,7 @@ type SSTFileWriter struct {
 // Funkcija konstruise jedan SSTFileWriter
 func GetSSTFileWriter(mulitple_files bool) SSTFileWriter {
 	//TODO: Citati multiple_files iz podesavanja
-	return SSTFileWriter{sstFile: nil, summaryFile: nil, indexFile: nil, metadataFile: nil, tocFile: nil, is_multiple_files: mulitple_files, next_summary_key: []byte{}, next_summary_offset: 0, records_written: 0, last_key_written: []byte{}, Ok: true, valuesWritten: make([][]byte, 0)}
+	return SSTFileWriter{sstFile: nil, summaryFile: nil, indexFile: nil, metadataFile: nil, tocFile: nil, is_multiple_files: mulitple_files, next_summary_key: []byte{}, next_summary_offset: 0, Records_written: 0, last_key_written: []byte{}, Ok: true, valuesWritten: make([][]byte, 0)}
 }
 
 // Funkcija otvara fajl(ove) za upis SSTabele
@@ -152,7 +152,7 @@ func (writer *SSTFileWriter) Put(entry *SSTableEntry) {
 	//TODO: Proveri da li je doslo do greske pri pisanju reda SSTabele
 	writeSSTableEntry(writer.sstFile, entry)
 
-	if writer.records_written == 0 {
+	if writer.Records_written == 0 {
 		writer.first_key_written = entry.Key
 	}
 
@@ -160,15 +160,15 @@ func (writer *SSTFileWriter) Put(entry *SSTableEntry) {
 	writer.last_key_written = entry.Key
 
 	if writer.is_multiple_files {
-		if writer.records_written%summary_density == 0 {
+		if writer.Records_written%summary_density == 0 {
 			writer.next_summary_key = entry.Key
 		}
 
 		writeIndexEntry(writer.indexFile, string(key), uint64(offset))
 		//fmt.Println("Kljuc: ", key, "Vrednost: ", value)
 
-		writer.records_written++
-		if writer.records_written%summary_density == 0 {
+		writer.Records_written++
+		if writer.Records_written%summary_density == 0 {
 			writeSummaryEntry(writer.summaryFile, writer.next_summary_key, entry.Key, writer.next_summary_offset)
 			writer.next_summary_offset, err = writer.indexFile.Seek(0, io.SeekCurrent)
 			if err != nil {
@@ -177,7 +177,7 @@ func (writer *SSTFileWriter) Put(entry *SSTableEntry) {
 			}
 		}
 	} else {
-		writer.records_written++
+		writer.Records_written++
 	}
 }
 
@@ -220,7 +220,7 @@ func (writer *SSTFileWriter) Finish() {
 
 	sstIter := SSTableIterator{sstFile: sstFileReadOnly, end_offset: endOfData, Valid: true, Ok: true}
 
-	filter := bloomfilter.CreateBloomFilterBasedOnParams(writer.records_written, FALSE_POSITIVE_RATE)
+	filter := bloomfilter.CreateBloomFilterBasedOnParams(writer.Records_written, FALSE_POSITIVE_RATE)
 
 	metadata := merkleTree.CreateMerkleTree(writer.valuesWritten)
 	metadataBytes := merkleTree.SerializeTree(metadata)
@@ -233,7 +233,7 @@ func (writer *SSTFileWriter) Finish() {
 		serialized_filter := filter.Serialize()
 		serialized_length := uint64(len(serialized_filter))
 
-		if writer.records_written%summary_density != 0 {
+		if writer.Records_written%summary_density != 0 {
 			writeSummaryEntry(writer.summaryFile, writer.next_summary_key, writer.last_key_written, writer.next_summary_offset)
 		}
 
@@ -304,8 +304,8 @@ func (writer *SSTFileWriter) Finish() {
 			panic(err)
 		}
 	} else {
-		summary_keys := make([][]byte, 0, writer.records_written)
-		index_offsets := make([]int64, 0, writer.records_written)
+		summary_keys := make([][]byte, 0, writer.Records_written)
+		index_offsets := make([]int64, 0, writer.Records_written)
 		records_ingested := 0
 
 		currentIndexOffset := endOfData

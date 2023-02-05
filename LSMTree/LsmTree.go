@@ -2,7 +2,9 @@ package lsmtree
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/darkokos/NAiSP_Projekat/config"
 	"github.com/darkokos/NAiSP_Projekat/memtable"
@@ -11,37 +13,43 @@ import (
 
 // Pravi LSMTree sa memtabelom,maksimalnim nivoom i trenutnim najvecim nivoom
 type LogStructuredMergeTree struct {
-	Memtable     memtable.MemTable
-	Level        int
-	Currentlevel int
+	memtable     memtable.MemTable
+	level        int
+	currentlevel int
 }
 
 func NewLogStructuredMergeTree(capacity int) *LogStructuredMergeTree {
-	config.ReadConfig()
 	return &LogStructuredMergeTree{
-		Memtable:     *memtable.MakeMemTableFromConfig(),
-		Level:        int(config.Configuration.LSMTreeLevels),
-		Currentlevel: findlevel(),
+		memtable:     *memtable.MakeHashMapMemTable(capacity),
+		level:        int(config.Configuration.LSMTreeLevels),
+		currentlevel: Findlevel(),
 	}
 
 }
 
-// Trazi trenutni najveci nivo
-func findlevel() int {
-	i := 1
-	for {
-		iter := sstable.GetSSTableIterator("level-" + fmt.Sprint(i) + "-usertable-000001--Data.db")
-		if iter == nil {
-			return i
-		}
-		i++
+// Trazi trenutni najveci nivo ili vraca 0 ako nema sstabeli
+func Findlevel() int {
+	files, err := filepath.Glob("level-*-Data.db")
+	if err != nil || len(files) == 0 {
+		return 0 // Nema sstabeli, najveci nivo je C0
+	}
+
+	last_table_name := files[len(files)-1] // Niz imena fajlova koji ce se vratiti ce biti sortiran
+	prefix_before_level := "level-"
+	// Definisano je da se koriste dve cifre za nivo
+	level, err := strconv.Atoi(last_table_name[len(prefix_before_level) : len(prefix_before_level)+2])
+
+	if err == nil {
+		return level
+	} else {
+		return 0
 	}
 }
 
 // Trazi u memtable, ako ne nadje trazi u ss tabelama
 func (lsmt *LogStructuredMergeTree) Get(key []byte) (string, bool) { //trazi prvo u memtable, ako nije tamo prolazi kroz svaki sstable
 
-	if value, ok := lsmt.Memtable.Get(string(key)); ok {
+	if value, ok := lsmt.memtable.Get(string(key)); ok {
 		return string(value), true
 	} else {
 		return lsmt.FindInSSTable(key)
@@ -52,7 +60,7 @@ func (lsmt *LogStructuredMergeTree) Get(key []byte) (string, bool) { //trazi prv
 // Trazi kljuc u svim SS tabelama
 func (lsmt *LogStructuredMergeTree) FindInSSTable(key []byte) (string, bool) {
 	i := 1
-	for i <= lsmt.Currentlevel {
+	for i <= lsmt.currentlevel {
 		levelstr := ""
 		if i < 10 {
 			levelstr = "0" + fmt.Sprint(i)
@@ -83,80 +91,162 @@ func (lsmt *LogStructuredMergeTree) FindInSSTable(key []byte) (string, bool) {
 
 }
 
-// Funkcija uzima dva fajla, i pravi sortirani treci fajl
-func merge(file1 string, file2 string, outputstring string) bool {
-	iterator1 := sstable.GetSSTableIterator(file1)
-	iterator2 := sstable.GetSSTableIterator(file2)
+func MergeMultipleTables(files []string, outputfile string) bool {
+	iterators := []sstable.SSTableIterator{}
+	entries := []sstable.SSTableEntry{}
 	writer := sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
-	writer.Open(outputstring)
-	entry1 := iterator1.Next()
-	entry2 := iterator2.Next()
+	writer.Open(outputfile)
+	if !writer.Ok {
+		panic("Greska pri otvaranju writer-a.")
+	}
+
+	for i := range files {
+		iterator := sstable.GetSSTableIterator(files[i])
+		if iterator == nil {
+			fmt.Println("Ne radi")
+			continue
+		}
+		iterators = append(iterators, *iterator)
+		entry := iterator.Next()
+		if entry == nil {
+			fmt.Println("Ne radi")
+			continue
+		}
+		entries = append(entries, *entry)
+	}
 	for {
-		if iterator1.Valid && iterator2.Valid {
-			if string(entry1.Key) < string(entry2.Key) {
-				if !entry1.Tombstone {
-					writer.Put(entry1)
-				}
-				entry1 = iterator1.Next()
-				continue
+		min := &sstable.SSTableEntry{}
+		for i := range entries {
+			if i == 0 {
+				min = &entries[0]
 			} else {
-				if string(entry2.Key) < string(entry1.Key) {
-					if !entry2.Tombstone {
-						writer.Put(entry2)
-					}
-					entry2 = iterator2.Next()
-					continue
+				if string(min.Key) > string(entries[i].Key) {
+					min = &entries[i]
 				} else {
-					if string(entry2.Key) == string(entry1.Key) {
-						if entry1.Timestamp > entry2.Timestamp {
-							if !entry1.Tombstone {
-								writer.Put(entry1)
-							} else {
-								if !entry2.Tombstone {
-									writer.Put(entry2)
-								}
-							}
-							entry1 = iterator1.Next()
-							entry2 = iterator2.Next()
-							continue
-						} else {
-							if entry1.Timestamp < entry2.Timestamp {
-								if !entry2.Tombstone {
-									writer.Put(entry2)
-								} else {
-									if !entry1.Tombstone {
-										writer.Put(entry1)
-									}
-								}
-								entry1 = iterator1.Next()
-								entry2 = iterator2.Next()
-								continue
-							}
+
+					if string(min.Key) == string(entries[i].Key) {
+
+						if min.Timestamp < entries[i].Timestamp {
+							min = &entries[i]
 						}
 					}
-				}
 
+				}
 			}
 		}
-		if !iterator1.Valid && iterator2.Valid {
-			if !entry2.Tombstone {
-				writer.Put(entry2)
-			}
-			entry2 = iterator2.Next()
-			continue
+		writer.Put(min)
+		if !writer.Ok {
+			panic("Greska pri upisu u SSTable.")
 		}
-		if iterator1.Valid && !iterator2.Valid {
-			if !entry1.Tombstone {
-				writer.Put(entry1)
+
+		tempkey := string(min.Key)
+		for i := range entries {
+			if tempkey == string(entries[i].Key) {
+				entry := iterators[i].Next()
+				if entry == nil {
+					iterators = append(iterators[:i], iterators[i+1:]...)
+					entries = append(entries[:i], entries[i+1:]...)
+					i--
+				} else {
+					entries[i] = *entry
+				}
 			}
-			entry1 = iterator1.Next()
-			continue
 		}
-		if !iterator1.Valid && !iterator2.Valid {
+		if len(iterators) == 0 {
+			writer.Finish()
+			if !writer.Ok {
+				panic("Greska pri zatvaranju writer-a.")
+			}
+
 			break
 		}
 
 	}
-	writer.CloseFiles()
+	return true
+}
+
+func MergeMultipleTablesLCS(files []string, level int) bool {
+	iterators := []sstable.SSTableIterator{}
+	entries := []sstable.SSTableEntry{}
+	writer := sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
+	writer.Open("level-" + fmt.Sprintf("%02d", level) + "-usertable-" + fmt.Sprintf("%020d", time.Now().UnixNano()))
+	if !writer.Ok {
+		panic("Greska pri otvaranju writer-a.")
+	}
+
+	for i := range files {
+		iterator := sstable.GetSSTableIterator(files[i])
+		if iterator == nil {
+			fmt.Println("Ne radi")
+			continue
+		}
+		iterators = append(iterators, *iterator)
+		entry := iterator.Next()
+		if entry == nil {
+			fmt.Println("Ne radi")
+			continue
+		}
+		entries = append(entries, *entry)
+	}
+	for {
+		min := &sstable.SSTableEntry{}
+		for i := range entries {
+			if i == 0 {
+				min = &entries[0]
+			} else {
+				if string(min.Key) > string(entries[i].Key) {
+					min = &entries[i]
+				} else {
+
+					if string(min.Key) == string(entries[i].Key) {
+
+						if min.Timestamp < entries[i].Timestamp {
+							min = &entries[i]
+						}
+					}
+
+				}
+			}
+		}
+		writer.Put(min)
+		if !writer.Ok {
+			panic("Greska pri upisivanju u SSTable.")
+		}
+
+		tempkey := string(min.Key)
+		for i := range entries {
+			if tempkey == string(entries[i].Key) {
+				entry := iterators[i].Next()
+				if entry == nil {
+					iterators = append(iterators[:i], iterators[i+1:]...)
+					entries = append(entries[:i], entries[i+1:]...)
+					i--
+				} else {
+					entries[i] = *entry
+				}
+			}
+		}
+		if len(iterators) == 0 {
+			writer.Finish()
+			if !writer.Ok {
+				panic("Greska pri zatvaranju writer-a.")
+			}
+
+			break
+		}
+		if writer.Records_written == 160 { //Ako je zapisano 160 slogova, trenutna tabela se kompletira, a zatim se otvara nova
+			writer.Finish()
+			if !writer.Ok {
+				panic("Greska pri zatvaranju writer-a.")
+			}
+
+			writer = sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
+			writer.Open("level-" + fmt.Sprintf("%02d", level) + "-usertable-" + fmt.Sprintf("%020d", time.Now().UnixNano()))
+			if !writer.Ok {
+				panic("Greska pri otvaranju writer-a.")
+			}
+		}
+
+	}
 	return true
 }
