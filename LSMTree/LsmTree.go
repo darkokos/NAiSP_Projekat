@@ -169,7 +169,7 @@ func MergeMultipleTablesLCS(files []string, level int) bool {
 	iterators := []sstable.SSTableIterator{}
 	entries := []sstable.SSTableEntry{}
 	writer := sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
-	writer.Open("level-" + fmt.Sprintf("%02d", level) + "-usertable-" + fmt.Sprintf("%020d", time.Now().UnixNano()) + "-Data.db")
+	writer.Open("level-" + fmt.Sprintf("%02d", level) + "-usertable-" + fmt.Sprintf("%020d", time.Now().UnixNano()))
 	if !writer.Ok {
 		panic("Greska pri otvaranju writer-a.")
 	}
@@ -241,7 +241,7 @@ func MergeMultipleTablesLCS(files []string, level int) bool {
 			}
 
 			writer = sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
-			writer.Open("level-" + fmt.Sprintf("%02d", level) + "-usertable-" + fmt.Sprintf("%020d", time.Now().UnixNano()) + "-Data.db")
+			writer.Open("level-" + fmt.Sprintf("%02d", level) + "-usertable-" + fmt.Sprintf("%020d", time.Now().UnixNano()))
 			if !writer.Ok {
 				panic("Greska pri otvaranju writer-a.")
 			}

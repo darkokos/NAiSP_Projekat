@@ -3,6 +3,7 @@ package compactions
 import (
 	"fmt"
 	"math"
+	"os"
 	"path/filepath"
 
 	lsmtree "github.com/darkokos/NAiSP_Projekat/LSMTree"
@@ -23,5 +24,18 @@ func LCS() {
 		}
 
 		lsmtree.MergeMultipleTablesLCS(tables_to_merge, level+1) //Poseban algoritam za merge koji ce otvarati novu tabelu svaki put kada se napise 160 zapisa u trenutnu, pocevsi od prosledjene tabele. Potrebno ga je napisati u implementaciji LSM stabla, modifikacijom STCS merge algoritma.
+
+		for _, table := range tables_to_merge { //Brisanje tabela i svih propratnih fajlova nakon kompakcije
+			table_prefix := table[:len(table)-8]
+
+			tables_to_remove, err := filepath.Glob(table_prefix + "*")
+			if err != nil {
+				panic(err)
+			}
+
+			for _, table_to_remove := range tables_to_remove {
+				os.Remove(table_to_remove)
+			}
+		}
 	}
 }
