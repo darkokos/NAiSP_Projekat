@@ -106,7 +106,7 @@ func (memTable *MemTable) Flush() {
 
 	memTableEntries := memTable.data.GetSortedEntries()
 
-	fmt.Println("Flush")
+	//fmt.Println("Flush")
 
 	sstWriter := sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
 
@@ -114,7 +114,7 @@ func (memTable *MemTable) Flush() {
 	sstWriter.Open("level-01-usertable-" + fmt.Sprintf("%020d", current_time))
 
 	for _, entry := range memTableEntries {
-		fmt.Println("Kljuc: ", string(entry.Key), "Vrednost: ", entry.Value, "Timestamp:", entry.Timestamp, "Obrisan: ", entry.Tombstone)
+		//fmt.Println("Kljuc: ", string(entry.Key), "Vrednost: ", entry.Value, "Timestamp:", entry.Timestamp, "Obrisan: ", entry.Tombstone)
 
 		// Mora ovaj copy-paste jer cemo izazvati cirkularni import
 		sst_entry := sstable.CreateSSTableEntry(entry.Key, entry.Value, entry.Timestamp, entry.Tombstone)

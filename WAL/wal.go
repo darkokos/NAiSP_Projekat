@@ -291,7 +291,7 @@ func DeleteSegments() {
 	}
 
 	if max_offset < LOW_WATER_MARK { //Provera da li je poslednji log fajl dostigao low-water mark
-		fmt.Println("Nije jos dostignut low-water mark, pa brisanje nije moguce.")
+		//fmt.Println("Nije jos dostignut low-water mark, pa brisanje nije moguce.")
 		return
 	}
 
