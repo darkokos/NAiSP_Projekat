@@ -140,25 +140,26 @@ func MergeMultipleTables(files []string, outputfile string) bool {
 		}
 
 		tempkey := string(min.Key)
+		iteratorstemp := []sstable.SSTableIterator{}
+		entriestemp := []sstable.SSTableEntry{}
 		for i := range entries {
 			if tempkey == string(entries[i].Key) {
 				entry := iterators[i].Next()
-				if entry == nil {
-					iterators = append(iterators[:i], iterators[i+1:]...)
-					entries = append(entries[:i], entries[i+1:]...)
-					i--
-				} else {
-					entries[i] = *entry
+				if entry != nil {
+					iteratorstemp = append(iteratorstemp, iterators[i])
+					entriestemp = append(entriestemp, *entry)
 				}
+			} else {
+				iteratorstemp = append(iteratorstemp, iterators[i])
+				entriestemp = append(entriestemp, entries[i])
 			}
 		}
-		if len(iterators) == 0 {
+		if len(iteratorstemp) == 0 {
 			writer.Finish()
-			if !writer.Ok {
-				panic("Greska pri zatvaranju writer-a.")
-			}
-
 			break
+		} else {
+			iterators = iteratorstemp
+			entries = entriestemp
 		}
 
 	}
@@ -214,25 +215,26 @@ func MergeMultipleTablesLCS(files []string, level int) bool {
 		}
 
 		tempkey := string(min.Key)
+		iteratorstemp := []sstable.SSTableIterator{}
+		entriestemp := []sstable.SSTableEntry{}
 		for i := range entries {
 			if tempkey == string(entries[i].Key) {
 				entry := iterators[i].Next()
-				if entry == nil {
-					iterators = append(iterators[:i], iterators[i+1:]...)
-					entries = append(entries[:i], entries[i+1:]...)
-					i--
-				} else {
-					entries[i] = *entry
+				if entry != nil {
+					iteratorstemp = append(iteratorstemp, iterators[i])
+					entriestemp = append(entriestemp, *entry)
 				}
+			} else {
+				iteratorstemp = append(iteratorstemp, iterators[i])
+				entriestemp = append(entriestemp, entries[i])
 			}
 		}
-		if len(iterators) == 0 {
+		if len(iteratorstemp) == 0 {
 			writer.Finish()
-			if !writer.Ok {
-				panic("Greska pri zatvaranju writer-a.")
-			}
-
 			break
+		} else {
+			iterators = iteratorstemp
+			entries = entriestemp
 		}
 		if writer.Records_written == 160 { //Ako je zapisano 160 slogova, trenutna tabela se kompletira, a zatim se otvara nova
 			writer.Finish()

@@ -34,8 +34,6 @@ package sstable
 // footer - Blok u kome se nalazi pokazivaci ka index, summary, filter i metadata blokovima (videti sst_footer.go)
 // magic number - Magicni broj koji kaze da je SSTabela zapisana kao jedan fajl (8B)
 
-// TODO: Sledece dve funkcije bi trebalo da budu jedna koja ce citati iz konfiguracije kako da pise
-
 // Ove funkcije su zakomentarisane jer izazivaju cirkularne importe izmedju sstable i memtable
 
 // Funkcija pise MemTable zapise u SSTabelu koja se nalazi u vise fajlova.

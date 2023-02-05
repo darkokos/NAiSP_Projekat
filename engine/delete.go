@@ -1,13 +1,25 @@
 package engine
 
-import wal "github.com/darkokos/NAiSP_Projekat/WAL"
+import (
+	wal "github.com/darkokos/NAiSP_Projekat/WAL"
+)
 
 func (engine *DB) Delete(key string) bool {
-	//TODO: Delete operacija
+
+	/*
+		if engine.Rate_limiting_enabled {
+			if !engine.RateLimitCheck() {
+				fmt.Println("Rate limit")
+				return false
+			}
+		}
+	*/
 
 	// Belezimo brisanje u WAL
-	walEntry := wal.CreateWALEntry(true, []byte(key), []byte{})
-	walEntry.Append()
+	if engine.wal_enabled {
+		walEntry := wal.CreateWALEntry(true, []byte(key), []byte{})
+		walEntry.Append()
+	}
 
 	if r := recover(); r != nil {
 		// Nije uspelo dodavanje u WAL
@@ -17,7 +29,9 @@ func (engine *DB) Delete(key string) bool {
 	ok := engine.memtable.Delete(key)
 	if ok {
 		engine.cache.Edit([]byte(key), nil) // Moramo ukloniti element iz kesa - prevencija zastarelog kesa
-		wal.DeleteSegments()
+		if engine.wal_enabled {
+			wal.DeleteSegments()
+		}
 		return true
 	} else {
 		return false

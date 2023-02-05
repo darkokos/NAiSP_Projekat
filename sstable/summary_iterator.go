@@ -17,8 +17,8 @@ import (
 type SummaryIterator struct {
 	summaryFile *os.File
 	end_offset  int64
-	begin_key   string
-	end_key     string
+	Begin_key   string
+	End_key     string
 	Valid       bool
 	Ok          bool
 }
@@ -56,7 +56,10 @@ func getBeginEndKeysAndFooterOffset(summary_file *os.File) (begin_key []byte, en
 
 	last_key_size := binary.LittleEndian.Uint64(bytes_read)
 
-	//TODO: Ozbediti se od lose ucitanih (ovo se moze uraditi proverom u odnosu na velicinu fajla)
+	if first_key_size > MAX_KEY_VAL_SIZE || last_key_size > MAX_KEY_VAL_SIZE {
+		return nil, nil, -1, false
+	}
+
 	first_key := make([]byte, first_key_size)
 	last_key := make([]byte, last_key_size)
 	binary.Read(summary_file, binary.LittleEndian, first_key)
@@ -93,7 +96,7 @@ func GetSummaryIteratorFromFile(filename string) *SummaryIterator {
 		return nil
 	}
 
-	iter := SummaryIterator{summaryFile: summary_file, end_offset: footerOffset, begin_key: string(first_key), end_key: string(last_key), Valid: true, Ok: true}
+	iter := SummaryIterator{summaryFile: summary_file, end_offset: footerOffset, Begin_key: string(first_key), End_key: string(last_key), Valid: true, Ok: true}
 
 	return &iter
 }
@@ -102,7 +105,6 @@ func GetSummaryIteratorFromFile(filename string) *SummaryIterator {
 // Vraca konstruisani iterator.
 // Vraca nil ako je doslo do greske.
 func GetSummaryIteratorFromSSTableFile(filename string) *SummaryIterator {
-	//TODO: Summary iterator iz sst fajla
 
 	sstFile, err := os.Open(filename)
 	if err != nil {
@@ -136,7 +138,7 @@ func GetSummaryIteratorFromSSTableFile(filename string) *SummaryIterator {
 		return nil
 	}
 
-	iter := &SummaryIterator{summaryFile: sstFile, end_offset: endOfSummary, begin_key: string(first_key), end_key: string(last_key), Valid: true, Ok: true}
+	iter := &SummaryIterator{summaryFile: sstFile, end_offset: endOfSummary, Begin_key: string(first_key), End_key: string(last_key), Valid: true, Ok: true}
 	return iter
 }
 
@@ -173,7 +175,7 @@ func (iter *SummaryIterator) Next() *SummaryEntry {
 // Ili vraca nil, invalidira iterator i zatvara fajl
 func (iter *SummaryIterator) Seek(key string) *SummaryEntry {
 
-	if key < iter.begin_key || key > iter.end_key {
+	if key < iter.Begin_key || key > iter.End_key {
 		iter.Valid = false
 		iter.summaryFile.Close()
 		return nil

@@ -80,7 +80,10 @@ func readSummaryEntry(summary_file *os.File) (*SummaryEntry, bool) {
 
 	last_key_size := binary.LittleEndian.Uint64(size_bytes)
 
-	//TODO: Ozbediti se od lose ucitanih (ovo se moze uraditi proverom u odnosu na velicinu fajla)
+	if first_key_size > MAX_KEY_VAL_SIZE || last_key_size > MAX_KEY_VAL_SIZE {
+		return nil, false
+	}
+
 	first_key := make([]byte, first_key_size)
 	last_key := make([]byte, last_key_size)
 	binary.Read(summary_file, binary.LittleEndian, first_key)
@@ -115,7 +118,10 @@ func findSummaryEntry(summary_file *os.File, key []byte) *SummaryEntry {
 
 	last_key_size := binary.LittleEndian.Uint64(size_bytes)
 
-	//TODO: Ozbediti se od lose ucitanih (ovo se moze uraditi proverom u odnosu na velicinu fajla)
+	if first_key_size > MAX_KEY_VAL_SIZE || last_key_size > MAX_KEY_VAL_SIZE {
+		return nil
+	}
+
 	first_key := make([]byte, first_key_size)
 	last_key := make([]byte, last_key_size)
 	binary.Read(summary_file, binary.LittleEndian, first_key)

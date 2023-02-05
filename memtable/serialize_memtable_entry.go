@@ -22,7 +22,7 @@ func MemTableEntryToBytes(entry *MemTableEntry) []byte {
 	encoder := gob.NewEncoder(buf)
 	err := encoder.Encode(entry)
 	if err != nil {
-		panic(err) // TODO: Rukuj greskom u serijalizaciji memtable-entry-a
+		panic(err)
 	}
 
 	return buf.Bytes()

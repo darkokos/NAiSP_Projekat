@@ -106,7 +106,7 @@ func (memTable *MemTable) Flush() {
 
 	memTableEntries := memTable.data.GetSortedEntries()
 
-	fmt.Println("Flush")
+	//fmt.Println("Flush")
 
 	sstWriter := sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
 
@@ -114,17 +114,13 @@ func (memTable *MemTable) Flush() {
 	sstWriter.Open("level-01-usertable-" + fmt.Sprintf("%020d", current_time))
 
 	for _, entry := range memTableEntries {
-		fmt.Println("Kljuc: ", string(entry.Key), "Vrednost: ", entry.Value, "Timestamp:", entry.Timestamp, "Obrisan: ", entry.Tombstone)
+		//fmt.Println("Kljuc: ", string(entry.Key), "Vrednost: ", entry.Value, "Timestamp:", entry.Timestamp, "Obrisan: ", entry.Tombstone)
 
 		// Mora ovaj copy-paste jer cemo izazvati cirkularni import
 		sst_entry := sstable.CreateSSTableEntry(entry.Key, entry.Value, entry.Timestamp, entry.Tombstone)
 
 		sstWriter.Put(sst_entry)
 	}
-
-	//TODO: Formiranje SSTable-a
-	// Za sada se ispisuje sadrzaj na ekran
-	// writeSSTable(fmt.Sprintf("usertable-%d-TABLE.db", memTable.generation), memTableEntries)
 
 	sstWriter.Finish()
 
@@ -138,6 +134,10 @@ func (memTable *MemTable) RangeScan(begin string, end string) [][]byte {
 	result := make([][]byte, 0)
 
 	memTableEntries := memTable.data.GetSortedEntries()
+
+	if len(memTableEntries) == 0 {
+		return result
+	}
 
 	if string(memTableEntries[len(memTableEntries)-1].Key) < begin {
 		return result
@@ -160,6 +160,10 @@ func (memTable *MemTable) RangeScanEntries(begin string, end string) []*MemTable
 
 	memTableEntries := memTable.data.GetSortedEntries()
 
+	if len(memTableEntries) == 0 {
+		return result
+	}
+
 	if string(memTableEntries[len(memTableEntries)-1].Key) < begin {
 		return result
 	}
@@ -181,6 +185,10 @@ func (memTable *MemTable) PrefixScan(prefix string) [][]byte {
 
 	memTableEntries := memTable.data.GetSortedEntries()
 
+	if len(memTableEntries) == 0 {
+		return result
+	}
+
 	for _, entry := range memTableEntries {
 		key_str := string(entry.Key)
 		if strings.HasPrefix(key_str, prefix) && !entry.Tombstone {
@@ -195,6 +203,10 @@ func (memTable *MemTable) PrefixScanEntries(prefix string) []*MemTableEntry {
 	result := make([]*MemTableEntry, 0)
 
 	memTableEntries := memTable.data.GetSortedEntries()
+
+	if len(memTableEntries) == 0 {
+		return result
+	}
 
 	for _, entry := range memTableEntries {
 		key_str := string(entry.Key)

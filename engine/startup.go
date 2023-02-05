@@ -23,8 +23,6 @@ func (engine *DB) ReplayWal() {
 
 	walEntries := wal.ReadWAL()
 
-	// TODO: Ovo ne bi treblo da proizvodi WAL zapise, a proizvodi ih.
-	// Dodati put-ove i delete-ove koji ne gledaju wal
 	for _, walEntry := range walEntries {
 		if !walEntry.Tombstone {
 			engine.Put(string(walEntry.Key), walEntry.Value)

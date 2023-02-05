@@ -19,7 +19,7 @@ func STCS() {
 
 		num_of_tables := len(tables_to_merge)
 
-		if num_of_tables < 2 { //Kraj algoritma ako ne postoje barem 2 tabele za kompakciju
+		if num_of_tables < 4 { //Kraj algoritma ako ne postoje barem 2 tabele za kompakciju
 			break
 		}
 

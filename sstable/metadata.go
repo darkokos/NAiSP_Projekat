@@ -18,7 +18,7 @@ func writeMetadataSeparateFile(entries []*memtable.MemTableEntry, filename strin
 	metdata_file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		fmt.Println("Greska u otvaranju fajla za merkle stablo")
-		return // TODO: Sta se ako dodje do greske u kreiranju merkle stabla
+		return
 	}
 
 	err = binary.Write(metdata_file, binary.LittleEndian, metadata_bytes)

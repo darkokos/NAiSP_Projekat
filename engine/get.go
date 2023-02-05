@@ -13,6 +13,16 @@ import (
 // Vraca vrednost koja je dodelejena tom kljucu ako postoji u bazi ili nil
 // ako zapis sa prosledjenim kljucem ne postoji.
 func (engine *DB) Get(key string) []byte {
+
+	/*
+		if engine.Rate_limiting_enabled {
+			if !engine.RateLimitCheck() {
+				fmt.Println("Rate limit")
+				return nil
+			}
+		}
+	*/
+
 	key_bytes := []byte(key)
 	//val, ok := engine.lsm_tree.Get(key_bytes)
 

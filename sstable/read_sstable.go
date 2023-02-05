@@ -66,7 +66,10 @@ func ReadOneSSTEntry(sstableFile *os.File) (entry *SSTableEntry, ok bool) {
 	key_size := binary.LittleEndian.Uint64(key_size_bytes)
 	value_size := binary.LittleEndian.Uint64(value_size_bytes)
 
-	// TODO: key_size i value_size mogu biti poprilicno veliki, treba se zastiti od toga
+	if key_size > MAX_KEY_VAL_SIZE || value_size > MAX_KEY_VAL_SIZE {
+		return nil, false
+	}
+
 	key_bytes := make([]byte, key_size)
 	value_bytes := make([]byte, value_size)
 

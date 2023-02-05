@@ -30,8 +30,8 @@ type SSTFileWriter struct {
 	filterFile        *os.File
 	metadataFile      *os.File
 	tocFile           *os.File
-	is_multiple_files bool // TODO: Mozda cak ni ovo ne treba da bude tu kad budemo imali citanje konfiguracije
-	Records_written   int  // Broj zapisa koji su zapisani
+	is_multiple_files bool
+	Records_written   int // Broj zapisa koji su zapisani
 
 	// Vrednosti neophodne za pravilno pisanje summary-a
 	next_summary_key    []byte
@@ -45,7 +45,6 @@ type SSTFileWriter struct {
 
 // Funkcija konstruise jedan SSTFileWriter
 func GetSSTFileWriter(mulitple_files bool) SSTFileWriter {
-	//TODO: Citati multiple_files iz podesavanja
 	return SSTFileWriter{sstFile: nil, summaryFile: nil, indexFile: nil, metadataFile: nil, tocFile: nil, is_multiple_files: mulitple_files, next_summary_key: []byte{}, next_summary_offset: 0, Records_written: 0, last_key_written: []byte{}, Ok: true, valuesWritten: make([][]byte, 0)}
 }
 
