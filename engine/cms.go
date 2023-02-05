@@ -30,7 +30,7 @@ func (engine *DB) ReadFromCMS(cmsKey string, key []byte) (int, uint){
 	return 0, cms.Read(key)
 }
 func (engine *DB) DeleteCMS(cmsKey string) bool{
-	return engine.Delete(TransformKeyToBloomFilterKey("cms." + cmsKey))
+	return engine.Delete("cms." + cmsKey)
 } 
 func (engine *DB) CreateCMS(key string, precision float64, certainty float64) (success bool) {
 
@@ -38,5 +38,6 @@ func (engine *DB) CreateCMS(key string, precision float64, certainty float64) (s
 		return false
 	}
 	cms := CMS.CMS{}
+	cms.Init(precision, certainty)
 	return engine.PutCMS(key, cms)
 }
