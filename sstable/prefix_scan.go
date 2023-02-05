@@ -38,7 +38,7 @@ func PrefixScanSSTable(prefix string, sstFileName string, indexFilename string, 
 		return result
 	}
 
-	if !CouldPrefixBeInRange(summaryIterator.begin_key, summaryIterator.end_key, prefix) {
+	if !CouldPrefixBeInRange(summaryIterator.Begin_key, summaryIterator.End_key, prefix) {
 		return result
 	}
 

@@ -30,7 +30,7 @@ func RangeScanSSTable(begin string, end string, sstFileName string, indexFilenam
 		return result
 	}
 
-	if !RangesIntersect(summaryIterator.begin_key, summaryIterator.end_key, begin, end) {
+	if !RangesIntersect(summaryIterator.Begin_key, summaryIterator.End_key, begin, end) {
 		return result
 	}
 
