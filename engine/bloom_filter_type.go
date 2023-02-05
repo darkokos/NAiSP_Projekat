@@ -1,0 +1,38 @@
+package engine
+
+import bloomfilter "github.com/darkokos/NAiSP_Projekat/bloom-filter"
+
+func TransformKeyToBloomFilterKey(key string) string {
+	return "bloomfilter." + key
+}
+
+func (engine *DB) CreateBloomFilter(key string, m uint, k uint) {
+
+	bloom_filter := bloomfilter.CreateBloomFilter(m, k)
+	serialized_bloom_filter := bloom_filter.Serialize()
+
+	engine.Put(TransformKeyToBloomFilterKey(key), serialized_bloom_filter)
+}
+
+func (engine *DB) IsStringPossiblyInBloomFilter(key string, value string) (possibly_present, bloom_filter_exists bool) {
+	serialized_bloom_filter := engine.Get(TransformKeyToBloomFilterKey(key))
+
+	if serialized_bloom_filter != nil {
+		bloom_filter := bloomfilter.Deserialize(serialized_bloom_filter)
+		return bloom_filter.Find([]byte(value)), true
+	} else {
+		return false, false
+	}
+}
+
+func (engine *DB) AddStringToBloomFilter(key string, new_value string) bool {
+	serialized_bloom_filter := engine.Get(TransformKeyToBloomFilterKey(key))
+
+	if serialized_bloom_filter != nil {
+		bloom_filter := bloomfilter.Deserialize(serialized_bloom_filter)
+		bloom_filter.Add([]byte(new_value))
+		return engine.Put(TransformKeyToBloomFilterKey(key), bloom_filter.Serialize())
+	} else {
+		return false
+	}
+}
