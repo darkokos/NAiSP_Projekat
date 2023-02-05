@@ -41,6 +41,24 @@ func SimHashTest() {
 	similarity = CalculateSimilarity(distance)
 	fmt.Println("Similarity (2, 2similar):", similarity)
 
+	simhash1.NewText("This is a new text.")
+	simhash2.NewText("This is, once again, new text!")
+
+	distance = simhash1.CalculateDistance(simhash2)
+	fmt.Println("Hamming distance (1new, 2new):", distance)
+
+	similarity = CalculateSimilarity(distance)
+	fmt.Println("Similarity (1new, 2new):", similarity)
+
+	fmt.Println(simhash1.GetFingerprint())
+	bool := simhash1.Deserialize(simhash1.Serialize())
+	if bool {
+		fmt.Println("Deserialization successful!")
+	} else {
+		fmt.Println("Deserialization failed!")
+	}
+	fmt.Println(simhash1.GetFingerprint())
+
 }
 
 func (s *SimHash) GetFingerprint() string {
@@ -52,32 +70,36 @@ func (s *SimHash) GetFingerprint() string {
 }
 
 type SimHash struct {
-	Words       []string
-	Hashes      [][128]byte
-	Count       [128]int
 	Fingerprint [128]byte
 }
 
 func NewSimHash(text string) *SimHash {
 	sh := &SimHash{}
-	sh.RemoveStopWords(text)
-	sh.HashWords()
-	sh.CountBits()
-	sh.CalculateFingerprint()
+	sh.NewText(text)
 	return sh
 }
 
-func (s *SimHash) RemoveStopWords(text string) {
+func (sh *SimHash) NewText(text string) {
+	words := sh.RemoveStopWords(text)
+	hashes := sh.HashWords(words)
+	count := sh.CountBits(hashes)
+	sh.CalculateFingerprint(count)
+}
+
+func (s *SimHash) RemoveStopWords(text string) []string {
+	words := []string{}
 	// split-ujemo tekst i uklanjamo specijalne karaktere
 	for _, word := range strings.Fields(text) {
 		word = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(word, "")
-		s.Words = append(s.Words, word)
+		words = append(words, word)
 	}
+	return words
 }
 
-func (s *SimHash) HashWords() {
+func (s *SimHash) HashWords(words []string) [][128]byte {
+	hashes := [][128]byte{}
 	// hash-ujemo svaku rec sa MD5 hash algoritmom
-	for _, word := range s.Words {
+	for _, word := range words {
 		hash := md5.Sum([]byte(word))
 		// posto je MD5 hash 128 bitan ali vraca 16 bajtova, moramo da ga pretvorimo hash u 128 bita
 		var bits [128]byte
@@ -86,27 +108,30 @@ func (s *SimHash) HashWords() {
 			bits[i] = hash[i/8] >> uint(i%8) & 1
 		}
 		// dodajemo hash u niz hash-ova (svaki hash odgovara reci sa istim index-om)
-		s.Hashes = append(s.Hashes, bits)
+		hashes = append(hashes, bits)
 	}
+	return hashes
 }
 
-func (s *SimHash) CountBits() {
+func (s *SimHash) CountBits(hashes [][128]byte) [128]int {
+	count := [128]int{}
 	// racunamo zbir svih bitova (ako je 1 +1, ako je 0 -1) i smestano sumu na odgovarajuci index za koji ta suma odgovara
-	for _, hash := range s.Hashes {
+	for _, hash := range hashes {
 		for i := 0; i < 128; i++ {
 			if hash[i] == 1 {
-				s.Count[i]++
+				count[i]++
 			} else {
-				s.Count[i]--
+				count[i]--
 			}
 		}
 	}
+	return count
 }
 
-func (s *SimHash) CalculateFingerprint() {
+func (s *SimHash) CalculateFingerprint(count [128]int) {
 	// racunamo fingerprint na osnovu sume vrednosti bitova ( > 0 stavljamo 1, ostalo stavljamo 0)
 	for i := 0; i < 128; i++ {
-		if s.Count[i] >= 0 {
+		if count[i] >= 0 {
 			s.Fingerprint[i] = 1
 		} else {
 			s.Fingerprint[i] = 0
@@ -114,13 +139,35 @@ func (s *SimHash) CalculateFingerprint() {
 	}
 }
 
-func (s *SimHash) CalculateDistance(simhash *SimHash) int {
+func (s *SimHash) CalculateDistance(other *SimHash) int {
 	// racunamo hammingovu razdaljinu izmedju dva fingerprint-a
 	var distance int
 	for i := 0; i < 128; i++ {
-		if s.Fingerprint[i] != simhash.Fingerprint[i] {
+		if s.Fingerprint[i] != other.Fingerprint[i] {
 			distance++
 		}
 	}
 	return distance
+}
+
+func (s *SimHash) Serialize() []byte {
+	return []byte(s.GetFingerprint())
+}
+
+func (s *SimHash) Deserialize(b []byte) bool {
+	if len(b) != 128 {
+		return false
+	}
+	f := [128]byte{}
+	for i := 0; i < 128; i++ {
+		if b[i] == 49 {
+			f[i] = 1
+		} else if b[i] == 48 {
+			f[i] = 0
+		} else {
+			return false
+		}
+	}
+	s.Fingerprint = f
+	return true
 }
