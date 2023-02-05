@@ -63,7 +63,6 @@ func (n *BTreeNode) SearchNode(key []byte) (int, *BTreeNode) {
 
 	// Ako je trazeni kljuc veci od svih u tom cvoru onda rekurzivno trazimo
 	// u poslednjem detetu
-	//return n.children[len(n.children) - 1].SearchNode(key)
 
 	if (*(*n).children[len((*n).children)-1]).parent != nil && len(n.children[len(n.children)-1].keys) > 0 {
 
@@ -71,6 +70,7 @@ func (n *BTreeNode) SearchNode(key []byte) (int, *BTreeNode) {
 	}
 	return -1, n
 }
+//Funkcija za logicko brisanje kljuca u cvoru b stabla
 func (n *BTreeNode) DeleteKey(key []byte) {
 	for i, k := range (*n).keys {
 		if string(key) == string(k.key) {
@@ -89,17 +89,21 @@ func (n *BTreeNode) DeleteKey(key []byte) {
 	}
 	(*(*n).children[len((*n).children)-1]).DeleteKey(key)
 }
+//Wrapper za logicko brisanje kljuca
 func (t *BTree) Delete(key []byte) {
 	(*(*t).root).DeleteKey(key)
 }
+//Modifikacija kljuca
 func (t *BTree) ModifyKey(key []byte, value []byte) int {
 	if (*t).root == nil {
+		//Stablo nije inicijalizovano
 		return -1
 	}
 
 	ok, node := (*t).Search(key)
 
 	if ok == 0 {
+		//Ako je nadjen cvor sa kljucem, nadji kljuc i postavi tombstone
 		for i, k := range (*node).keys {
 			if string(k.key) == string(key) && k.tombstone == false {
 				(*node).keys[i].val = value
@@ -107,13 +111,17 @@ func (t *BTree) ModifyKey(key []byte, value []byte) int {
 		}
 		return 0
 	}
+	//Ako nije nadjen kljuc, operacija je neuspesna
 	return -1
 }
+//Metoda za dodavanje key-value pair-a u stablo
 func (t *BTree) AddKey(key []byte, value []byte) int {
 	pair := KvPair{key: key, val: value, tombstone: false}
+	//Pomocne promenljive za popunjavanje child array-a novih cvorova praznom decom
 	emptyNode1 := &BTreeNode{d: (*t).d}
 	emptyNode2 := &BTreeNode{d: (*t).d}
 	if (*t).root == nil {
+		//Ako stablo nije inicijalizovano, pravi se novi cvor, koji postaje root, a njegov jedini kljuc je kljuc koji se dodaje
 		(*t).root = &BTreeNode{
 			keys:     []KvPair{pair},
 			d:        (*t).d,
@@ -122,7 +130,6 @@ func (t *BTree) AddKey(key []byte, value []byte) int {
 	}
 
 	ok, node := (*t).Search(key)
-	// fmt.Print(node, "\n")
 	if ok == 0 {
 		for i, k := range (*node).keys {
 			if string(k.key) == string(key) && k.tombstone == true {
@@ -135,7 +142,7 @@ func (t *BTree) AddKey(key []byte, value []byte) int {
 	old_len := len(t.GetValuesSortedByKey())
 	node.AddKey(pair, t)
 	new_len := len(t.GetValuesSortedByKey())
-
+	//Common sense provera, da li je duzina niza vrednosti ostala ista
 	if new_len != old_len+1 {
 		fmt.Println()
 		fmt.Println("Nestanak elementa kad se dodao kljuc ", string(pair.key))
@@ -143,6 +150,7 @@ func (t *BTree) AddKey(key []byte, value []byte) int {
 	}
 	return 0
 }
+//Funkcija za dodavanje kljuca u cvor, koja ce biti zaduzena i za pozivanje rotacije i deljenja cvora
 func (node *BTreeNode) AddKey(pair KvPair, t *BTree) int {
 	if len(node.children) != len(node.keys)+1 {
 		fmt.Println()
