@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/darkokos/NAiSP_Projekat/config"
 	"github.com/darkokos/NAiSP_Projekat/memtable"
@@ -95,6 +96,10 @@ func MergeMultipleTables(files []string, outputfile string) bool {
 	entries := []sstable.SSTableEntry{}
 	writer := sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
 	writer.Open(outputfile)
+	if !writer.Ok {
+		panic("Greska pri otvaranju writer-a.")
+	}
+
 	for i := range files {
 		iterator := sstable.GetSSTableIterator(files[i])
 		if iterator == nil {
@@ -130,6 +135,10 @@ func MergeMultipleTables(files []string, outputfile string) bool {
 			}
 		}
 		writer.Put(min)
+		if !writer.Ok {
+			panic("Greska pri upisu u SSTable.")
+		}
+
 		tempkey := string(min.Key)
 		for i := range entries {
 			if tempkey == string(entries[i].Key) {
@@ -145,7 +154,97 @@ func MergeMultipleTables(files []string, outputfile string) bool {
 		}
 		if len(iterators) == 0 {
 			writer.Finish()
+			if !writer.Ok {
+				panic("Greska pri zatvaranju writer-a.")
+			}
+
 			break
+		}
+
+	}
+	return true
+}
+
+func MergeMultipleTablesLCS(files []string, level int) bool {
+	iterators := []sstable.SSTableIterator{}
+	entries := []sstable.SSTableEntry{}
+	writer := sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
+	writer.Open("level-" + fmt.Sprintf("%02d", level) + "-usertable-" + fmt.Sprintf("%020d", time.Now().UnixNano()) + "-Data.db")
+	if !writer.Ok {
+		panic("Greska pri otvaranju writer-a.")
+	}
+
+	for i := range files {
+		iterator := sstable.GetSSTableIterator(files[i])
+		if iterator == nil {
+			fmt.Println("Ne radi")
+			continue
+		}
+		iterators = append(iterators, *iterator)
+		entry := iterator.Next()
+		if entry == nil {
+			fmt.Println("Ne radi")
+			continue
+		}
+		entries = append(entries, *entry)
+	}
+	for {
+		min := &sstable.SSTableEntry{}
+		for i := range entries {
+			if i == 0 {
+				min = &entries[0]
+			} else {
+				if string(min.Key) > string(entries[i].Key) {
+					min = &entries[i]
+				} else {
+
+					if string(min.Key) == string(entries[i].Key) {
+
+						if min.Timestamp < entries[i].Timestamp {
+							min = &entries[i]
+						}
+					}
+
+				}
+			}
+		}
+		writer.Put(min)
+		if !writer.Ok {
+			panic("Greska pri upisivanju u SSTable.")
+		}
+
+		tempkey := string(min.Key)
+		for i := range entries {
+			if tempkey == string(entries[i].Key) {
+				entry := iterators[i].Next()
+				if entry == nil {
+					iterators = append(iterators[:i], iterators[i+1:]...)
+					entries = append(entries[:i], entries[i+1:]...)
+					i--
+				} else {
+					entries[i] = *entry
+				}
+			}
+		}
+		if len(iterators) == 0 {
+			writer.Finish()
+			if !writer.Ok {
+				panic("Greska pri zatvaranju writer-a.")
+			}
+
+			break
+		}
+		if writer.Records_written == 160 { //Ako je zapisano 160 slogova, trenutna tabela se kompletira, a zatim se otvara nova
+			writer.Finish()
+			if !writer.Ok {
+				panic("Greska pri zatvaranju writer-a.")
+			}
+
+			writer = sstable.GetSSTFileWriter(config.Configuration.MultipleFileSSTable)
+			writer.Open("level-" + fmt.Sprintf("%02d", level) + "-usertable-" + fmt.Sprintf("%020d", time.Now().UnixNano()) + "-Data.db")
+			if !writer.Ok {
+				panic("Greska pri otvaranju writer-a.")
+			}
 		}
 
 	}
