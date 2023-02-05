@@ -2,7 +2,6 @@ package engine
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 )
@@ -115,6 +114,7 @@ func (tb *TokenBucket) GetUserID() string {
 	return tb.userID
 }
 
+/*
 func TokenBucketTest() {
 	tbm := InitializeTokenBucketManager()
 	tb1, err := tbm.NewTokenBucket("user1", 1, 5) // 1 token po sekundi, kapacitet max 5 tokena
@@ -146,3 +146,4 @@ func TokenBucketTest() {
 	tb1.Close(tbm)
 	tb2.Close(tbm)
 }
+*/

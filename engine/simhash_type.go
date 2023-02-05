@@ -1,6 +1,6 @@
 package engine
 
-import sh "github.com/darkokos/NAiSP_Projekat/simhash"
+import sh "github.com/darkokos/NAiSP_Projekat/SimHash"
 
 func TransformKeyToSimhashKey(key string) string {
 	return "simhash." + key
