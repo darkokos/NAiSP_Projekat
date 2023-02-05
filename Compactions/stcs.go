@@ -2,6 +2,7 @@ package compactions
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -22,8 +23,21 @@ func STCS() {
 			break
 		}
 
-		result_table_name := "level-" + fmt.Sprintf("%02d", level+1) + "-usertable-" + fmt.Sprintf("%020d", time.Now().UnixNano()) + "-Data.db" //Naziv tabele na sledecem nivou koja ce se dobiti kao rezultat kompaktovanja
+		result_table_name := "level-" + fmt.Sprintf("%02d", level+1) + "-usertable-" + fmt.Sprintf("%020d", time.Now().UnixNano()) //Naziv tabele na sledecem nivou koja ce se dobiti kao rezultat kompaktovanja
 
 		lsmtree.MergeMultipleTables(tables_to_merge, result_table_name)
+
+		for _, table := range tables_to_merge { //Brisanje tabela i svih propratnih fajlova nakon kompakcije
+			table_prefix := table[:len(table)-8]
+
+			tables_to_remove, err := filepath.Glob(table_prefix + "*")
+			if err != nil {
+				panic(err)
+			}
+
+			for _, table_to_remove := range tables_to_remove {
+				os.Remove(table_to_remove)
+			}
+		}
 	}
 }
