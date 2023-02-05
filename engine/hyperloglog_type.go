@@ -39,7 +39,27 @@ func (engine *DB) AddValueToHyperLogLog(hll_key string, value string) (success b
 	return engine.Put(hll_key_in_db, serialized_hll)
 }
 
-func (engine *DB) EstimateHyperLogLog(hll_key string, value string) (estimate float64, success bool) {
+func (engine *DB) AddBatchOfValuesToHyperLogLog(hll_key string, values []string) (success bool) {
+	hll_key_in_db := TransformKeyToHLLKey(hll_key)
+
+	serialized_hll := engine.Get(hll_key_in_db)
+
+	hll := hyperloglog.DeserializeHLL(serialized_hll)
+
+	if hll == nil {
+		return false
+	}
+
+	for _, value := range values {
+		hll.Add([]byte(value))
+	}
+
+	serialized_hll = hll.Serialize()
+
+	return engine.Put(hll_key_in_db, serialized_hll)
+}
+
+func (engine *DB) EstimateHyperLogLog(hll_key string) (estimate float64, success bool) {
 	hll_key_in_db := TransformKeyToHLLKey(hll_key)
 
 	serialized_hll := engine.Get(hll_key_in_db)
