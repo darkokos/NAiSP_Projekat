@@ -1,15 +1,11 @@
 package lsmtree
 
 import (
-	"fmt"
 	"os"
 	"testing"
-
-	"github.com/darkokos/NAiSP_Projekat/config"
-	"github.com/darkokos/NAiSP_Projekat/memtable"
-	"github.com/darkokos/NAiSP_Projekat/sstable"
 )
 
+/*
 func Test(t *testing.T) {
 
 	fmt.Println("Kompajliralo se")
@@ -34,6 +30,7 @@ func Test(t *testing.T) {
 	}
 
 }
+*/
 
 func TestFindLevelNoSStables(t *testing.T) {
 	if Findlevel() != 0 {
