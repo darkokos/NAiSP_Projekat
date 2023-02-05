@@ -103,3 +103,34 @@ func TestBloomFilterTypeBatch(t *testing.T) {
 	Cleanup()
 
 }
+
+func TestBloomFilterInvalidParams(t *testing.T) {
+	config.DefaultConfiguration.MemtableSize = 2 // Da se bloom filter odmah flushuje na disk
+	config.DefaultConfiguration.RateLimit = 9999
+	config.DefaultConfiguration.MultipleFileSSTable = true
+	config.ReadConfig()
+	Cleanup()
+
+	db := GetNewDB()
+
+	bf_key := "mojFilter"
+
+	if db.CreateBloomFilter(bf_key, 0, 0) {
+		t.Fatalf("Nisu validni parametri")
+	}
+
+	if db.CreateBloomFilter(bf_key, 16, 0) {
+		t.Fatalf("Nisu validni parametri")
+	}
+
+	if db.CreateBloomFilter(bf_key, 0, 4) {
+		t.Fatalf("Nisu validni parametri")
+	}
+
+	if !db.CreateBloomFilter(bf_key, 1, 1) {
+		t.Fatalf("Jesu validni parametri, a nije proslo")
+	}
+
+	Cleanup()
+
+}

@@ -6,12 +6,16 @@ func TransformKeyToBloomFilterKey(key string) string {
 	return "bloomfilter." + key
 }
 
-func (engine *DB) CreateBloomFilter(key string, m uint, k uint) {
+func (engine *DB) CreateBloomFilter(key string, m uint, k uint) (success bool) {
+
+	if m == 0 || k == 0 {
+		return false
+	}
 
 	bloom_filter := bloomfilter.CreateBloomFilter(m, k)
 	serialized_bloom_filter := bloom_filter.Serialize()
 
-	engine.Put(TransformKeyToBloomFilterKey(key), serialized_bloom_filter)
+	return engine.Put(TransformKeyToBloomFilterKey(key), serialized_bloom_filter)
 }
 
 func (engine *DB) IsStringPossiblyInBloomFilter(key string, value string) (possibly_present, bloom_filter_exists bool) {
@@ -37,7 +41,7 @@ func (engine *DB) AddStringToBloomFilter(key string, new_value string) bool {
 	}
 }
 
-func (engine *DB) AddBatchOfStringToBloomFilter(key string, values []string) bool {
+func (engine *DB) AddBatchOfStringToBloomFilter(key string, values []string) (success bool) {
 	serialized_bloom_filter := engine.Get(TransformKeyToBloomFilterKey(key))
 
 	if serialized_bloom_filter != nil {
@@ -51,6 +55,6 @@ func (engine *DB) AddBatchOfStringToBloomFilter(key string, values []string) boo
 	}
 }
 
-func (engine *DB) DeleteBloomFilter(key string) bool {
+func (engine *DB) DeleteBloomFilter(key string) (success bool) {
 	return engine.Delete(TransformKeyToBloomFilterKey(key))
 }
