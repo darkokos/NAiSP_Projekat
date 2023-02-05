@@ -6,6 +6,10 @@ import (
 	wal "github.com/darkokos/NAiSP_Projekat/WAL"
 )
 
+const (
+	MAX_KEY_VAL_SIZE = 100000000 // 100 MB je maksimalna velicina kljuca ili vrednosti u bazi
+)
+
 // Format SSTable i WAL-a su isti
 type SSTableEntry wal.WALEntry
 

@@ -56,7 +56,10 @@ func getBeginEndKeysAndFooterOffset(summary_file *os.File) (begin_key []byte, en
 
 	last_key_size := binary.LittleEndian.Uint64(bytes_read)
 
-	//TODO: Ozbediti se od lose ucitanih (ovo se moze uraditi proverom u odnosu na velicinu fajla)
+	if first_key_size > MAX_KEY_VAL_SIZE || last_key_size > MAX_KEY_VAL_SIZE {
+		return nil, nil, -1, false
+	}
+
 	first_key := make([]byte, first_key_size)
 	last_key := make([]byte, last_key_size)
 	binary.Read(summary_file, binary.LittleEndian, first_key)
@@ -102,7 +105,6 @@ func GetSummaryIteratorFromFile(filename string) *SummaryIterator {
 // Vraca konstruisani iterator.
 // Vraca nil ako je doslo do greske.
 func GetSummaryIteratorFromSSTableFile(filename string) *SummaryIterator {
-	//TODO: Summary iterator iz sst fajla
 
 	sstFile, err := os.Open(filename)
 	if err != nil {

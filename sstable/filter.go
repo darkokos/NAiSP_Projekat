@@ -19,7 +19,6 @@ const (
 /*
 func writeFilter(f *os.File, entries []*memtable.MemTableEntry) {
 
-	// TODO: Konfigurasti false-positive rate
 	filter := bloomfilter.CreateBloomFilterBasedOnParams(len(entries), FALSE_POSITIVE_RATE)
 
 	for _, entry := range entries {
@@ -45,8 +44,11 @@ func readFilter(f *os.File) *bloomfilter.BloomFilter {
 		return nil
 	}
 
-	//TODO: Osigurati da se ne procita prevelika velicina bloom filtera
 	bloom_filter_size := binary.LittleEndian.Uint64(bloom_filter_size_bytes)
+
+	if bloom_filter_size > MAX_KEY_VAL_SIZE {
+		return nil
+	}
 
 	bloom_filter_bytes := make([]byte, bloom_filter_size)
 

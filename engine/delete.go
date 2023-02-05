@@ -3,8 +3,6 @@ package engine
 import wal "github.com/darkokos/NAiSP_Projekat/WAL"
 
 func (engine *DB) Delete(key string) bool {
-	//TODO: Delete operacija
-
 	// Belezimo brisanje u WAL
 	if engine.wal_enabled {
 		walEntry := wal.CreateWALEntry(true, []byte(key), []byte{})

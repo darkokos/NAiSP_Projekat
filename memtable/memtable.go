@@ -122,10 +122,6 @@ func (memTable *MemTable) Flush() {
 		sstWriter.Put(sst_entry)
 	}
 
-	//TODO: Formiranje SSTable-a
-	// Za sada se ispisuje sadrzaj na ekran
-	// writeSSTable(fmt.Sprintf("usertable-%d-TABLE.db", memTable.generation), memTableEntries)
-
 	sstWriter.Finish()
 
 	memTable.generation = memTable.generation + 1
