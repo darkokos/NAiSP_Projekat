@@ -14,7 +14,7 @@ func TestReadConfig(t *testing.T) {
 		t.Fatalf("Pogresno je procitana velicina memtable")
 	}
 
-	if Configuration.MemtableStructure != "btree" {
+	if Configuration.MemtableStructure != "b_tree" {
 		t.Fatalf("Pogresno je procitana koja struktura se koristi za memtable")
 	}
 
