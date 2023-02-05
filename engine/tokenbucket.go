@@ -7,9 +7,9 @@ import (
 )
 
 type TokenBucket struct {
-	tokens chan struct{}
-	stop   chan struct{}
-	userID string
+	Tokens chan struct{}
+	Stop   chan struct{}
+	UserID string
 }
 
 type TokenBucketManager struct {
@@ -38,20 +38,20 @@ func (tbm *TokenBucketManager) NewTokenBucket(userID string, rate int, capacity 
 	defer tbm.mu.Unlock()
 
 	tb = &TokenBucket{
-		tokens: make(chan struct{}, capacity),
-		stop:   make(chan struct{}),
-		userID: userID,
+		Tokens: make(chan struct{}, capacity),
+		Stop:   make(chan struct{}),
+		UserID: userID,
 	}
 
 	for i := 0; i < capacity; i++ {
-		tb.tokens <- struct{}{}
+		tb.Tokens <- struct{}{}
 	}
 
 	go tb.fill(rate, tbm)
 
 	b := tbm.db.Put(userID, []byte(tb.toJSON()))
 	if !b {
-		tb.stop <- struct{}{}
+		tb.Stop <- struct{}{}
 		return nil, false // Neuspesno spremanje token bucketa u bazu podataka"
 	}
 
@@ -82,11 +82,11 @@ func (tb *TokenBucket) fill(rate int, tbm *TokenBucketManager) {
 		select {
 		case <-ticker.C:
 			select {
-			case tb.tokens <- struct{}{}:
+			case tb.Tokens <- struct{}{}:
 			default:
 			}
-			tbm.db.Put(tb.userID, []byte(tb.toJSON()))
-		case <-tb.stop:
+			tbm.db.Put(tb.UserID, []byte(tb.toJSON()))
+		case <-tb.Stop:
 			return
 		}
 	}
@@ -94,11 +94,11 @@ func (tb *TokenBucket) fill(rate int, tbm *TokenBucketManager) {
 
 func (tb *TokenBucket) Take(tbm *TokenBucketManager) bool {
 	select {
-	case <-tb.tokens:
+	case <-tb.Tokens:
 		tbm.mu.Lock()
 		defer tbm.mu.Unlock()
 		data, _ := json.Marshal(tb)
-		tbm.db.Put(tb.userID, []byte(data))
+		tbm.db.Put(tb.UserID, []byte(data))
 		return true
 	default:
 		return false
@@ -106,12 +106,12 @@ func (tb *TokenBucket) Take(tbm *TokenBucketManager) bool {
 }
 
 func (tb *TokenBucket) Close(tbm *TokenBucketManager) (success bool) {
-	tb.stop <- struct{}{}
-	return tbm.db.Delete(tb.userID)
+	tb.Stop <- struct{}{}
+	return tbm.db.Delete(tb.UserID)
 }
 
 func (tb *TokenBucket) GetUserID() string {
-	return tb.userID
+	return tb.UserID
 }
 
 /*
