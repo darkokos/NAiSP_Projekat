@@ -98,7 +98,9 @@ func (tb *TokenBucket) Take(tbm *TokenBucketManager) bool {
 		tbm.mu.Lock()
 		defer tbm.mu.Unlock()
 		data, _ := json.Marshal(tb)
+		tbm.db.Rate_limiting_enabled = false
 		tbm.db.Put(tb.UserID, []byte(data))
+		tbm.db.Rate_limiting_enabled = true
 		return true
 	default:
 		return false

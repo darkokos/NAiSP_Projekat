@@ -9,6 +9,16 @@ import (
 )
 
 func (engine *DB) List(prefix string, page_number uint, page_size uint) [][]byte {
+
+	/*
+		if engine.Rate_limiting_enabled {
+			if !engine.RateLimitCheck() {
+				fmt.Println("Rate limit")
+				return nil
+			}
+		}
+	*/
+
 	if page_number < 1 || page_size == 0 {
 		return [][]byte{}
 	}

@@ -15,7 +15,7 @@ var Configuration Config = Config{
 	MultipleFileSSTable: true,
 	SummaryDensity:      4,
 	CacheSize:           4,
-	RateLimit:           3,
+	RateLimit:           999999, // Broj zahteva po sekundi
 	CompactionStrategy:  "size_tiered",
 }
 
@@ -27,7 +27,7 @@ var DefaultConfiguration Config = Config{
 	MultipleFileSSTable: true,
 	SummaryDensity:      4,
 	CacheSize:           4,
-	RateLimit:           3,
+	RateLimit:           999999,
 	CompactionStrategy:  "size_tiered",
 }
 

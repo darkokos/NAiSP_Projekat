@@ -5,6 +5,15 @@ import (
 )
 
 func (engine *DB) Put(key string, value []byte) bool {
+	/*
+		if engine.Rate_limiting_enabled {
+			if !engine.RateLimitCheck() {
+				fmt.Println("Rate limit")
+				return false
+			}
+		}
+	*/
+
 	key_bytes := []byte(key)
 
 	if engine.wal_enabled {

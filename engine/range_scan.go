@@ -16,6 +16,15 @@ import (
 // Paginacija pocinje stranicom 1. Ako se prosledi broj stranice 0, vraca se prazan niz.
 func (engine *DB) RangeScan(begin string, end string, page_number uint, page_size uint) [][]byte {
 
+	/*
+		if engine.Rate_limiting_enabled {
+			if !engine.RateLimitCheck() {
+				fmt.Println("Rate limit")
+				return nil
+			}
+		}
+	*/
+
 	if begin > end || page_number < 1 || page_size == 0 {
 		return [][]byte{}
 	}
